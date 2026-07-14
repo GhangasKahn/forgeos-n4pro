@@ -62,8 +62,8 @@ def gen_bar(
 
     L: list = []
     a = L.append
-    a("; ForgeOS G3 bar v4 — flat first layer (overlap) + wipe/retract")
-    a("; TARGET_LENGTH_MM:%.3f" % length)
+    a("; ForgeOS G3 bar v5 — flat first layer (overlap) + wipe/retract")
+    a("; TARGET_LENGTH_MM:%.3f  (CAD length; use --length to compensate shrink/short)" % length)
     a(
         "; FL_W:%.2f FL_FLOW:%.2f FL_SPD:%.0f SPACING_RATIO:%.2f"
         % (line_w, first_flow, first_spd_mm_s, spacing_ratio)
@@ -316,6 +316,12 @@ def main() -> int:
     ap.add_argument("--bed", type=float, default=None)
     ap.add_argument("--nozzle", type=float, default=None)
     ap.add_argument("--soak", type=float, default=None)
+    ap.add_argument(
+        "--length",
+        type=float,
+        default=100.0,
+        help="CAD bar length mm (e.g. 100.5 if last print measured ~99.5)",
+    )
     ap.add_argument("--use-stack", action="store_true")
     ap.add_argument("--ambient", type=float, default=14.0)
     args = ap.parse_args()
@@ -323,6 +329,7 @@ def main() -> int:
     bed, nozzle, soak = 65.0, 214.0, 5.0
     profile = HTPLA_BROZZL
     fl_w, fl_flow, fl_spd, sp_ratio = 0.58, 1.14, 15.0, 0.84
+    length = float(args.length)
 
     if args.use_stack:
         from forgeos.stack_profile import compose_stack
@@ -362,11 +369,12 @@ def main() -> int:
     else:
         text = gen_bar(
             bed, nozzle, soak, profile,
+            length=length,
             line_w=fl_w, first_flow=fl_flow, first_spd_mm_s=fl_spd, spacing_ratio=sp_ratio,
         )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(text, encoding="utf-8")
-    print("wrote", args.output, "mode", args.mode)
+    print("wrote", args.output, "mode", args.mode, "length", length if args.mode == "bar" else "n/a")
     return 0
 
 
