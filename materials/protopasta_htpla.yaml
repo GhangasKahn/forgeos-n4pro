@@ -37,16 +37,29 @@ role_accel_mm_s2:
   infill: 6000
   travel: 7000
 first_layer:
-  # Flat sheet on PEX (not "ribs"): fat lines + overlap + enough melt to fuse rows
+  # MACHINE-FLAT zero ironing: spacing = line_w, flow = 1.0 (volume balance)
+  # See docs/MACHINE_FLAT_ZERO_IRON.md — pile-up pack (0.58/0.84/1.14) retired
   height_mm: 0.28
-  line_width_mm: 0.58   # ~145% of 0.4 nozzle — lateral fill
-  speed_mm_s: 15
-  flow: 1.14            # merge adjacent beads into one plane
-  spacing_ratio: 0.84   # center-to-center = width * ratio (<1 = overlap)
+  line_width_mm: 0.44   # ~1.1× 0.4 nozzle — stable bead
+  speed_mm_s: 30        # adhesion-limited; Q allows more
+  flow: 1.00            # e_area = spacing * h when spacing = width
+  spacing_ratio: 1.00   # side-by-side; NOT 0.84 pile-up
+  monotonic: true
   fan_percent: 0
   brim: true
   bed_c: 65
-  nozzle_c: 214         # plated copper: a bit hotter than 210 so rows weld flat
+  nozzle_c: 214
+solid_surface:
+  line_width_mm: 0.44
+  layer_height_mm: 0.20
+  spacing_ratio: 1.00
+  flow: 1.00
+  speed_mm_s: 120       # Q-clamped in flat_surface.machine_flat_pack
+  top_speed_mm_s: 80
+  accel_mm_s2: 5000
+  square_corner_velocity: 5
+  monotonic: true
+  ironing: false        # FORBIDDEN — fix volume/PA/Z instead
 retract:
   # Geared N4 Pro (high ratio) + Brozzl Ni-Cu melt zone:
   # ooze/hanging whiskers need wipe-before-retract + enough pullback, no extra unretract.

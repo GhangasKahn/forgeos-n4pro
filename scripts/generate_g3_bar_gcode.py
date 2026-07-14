@@ -41,8 +41,11 @@ def gen_bar(
     spacing_ratio: float = 1.00,
     upper_line_w: float = 0.44,
     upper_spacing_ratio: float = 1.00,
+    upper_speed_mm_s: float = 120.0,
+    top_speed_mm_s: float = 80.0,
+    monotonic: bool = True,
 ) -> str:
-    """100mm bar — god-tier flat sheet: lines side-by-side (spacing ≈ width), no pile-up."""
+    """100mm bar — machine-flat: s=w, flow balanced, MONOTONIC solids, ZERO ironing."""
     x0 = (225.0 - length) / 2.0
     y0 = (225.0 - width) / 2.0
     x1 = x0 + length
@@ -56,21 +59,23 @@ def gen_bar(
     if layers_z[-1] < height - 1e-6:
         layers_z.append(height)
 
-    wall_spd = 50 * 60
+    wall_spd = int(min(80.0, upper_speed_mm_s) * 60)
     first_spd = int(first_spd_mm_s * 60)
-    infill_spd = 80 * 60
+    infill_spd = int(upper_speed_mm_s * 60)
+    top_spd = int(top_speed_mm_s * 60)
     travel = int(profile.travel_speed_mm_s * 60)
     spacing = line_w * spacing_ratio
 
     L: list = []
     a = L.append
-    a("; ForgeOS G3 bar v6 — GOD-TIER FLAT (side-by-side lines, no heavy overlap)")
+    a("; ForgeOS G3 bar v7 — MACHINE-FLAT ZERO IRONING (monotonic, s=w, Q-limited)")
     a("; TARGET_LENGTH_MM:%.3f  (CAD length; use --length to compensate shrink/short)" % length)
     a(
-        "; FL_W:%.2f FL_FLOW:%.2f FL_SPD:%.0f SPACING_RATIO:%.3f STEP:%.3fmm"
-        % (line_w, first_flow, first_spd_mm_s, spacing_ratio, spacing)
+        "; FL_W:%.2f FL_FLOW:%.2f FL_SPD:%.0f SPACING_RATIO:%.3f STEP:%.3fmm MONO=%s"
+        % (line_w, first_flow, first_spd_mm_s, spacing_ratio, spacing, monotonic)
     )
-    a("; FLAT_RULE: spacing_ratio=1.0 → centers one line-width apart (kissing sides, not stacked)")
+    a("; FLAT_RULE: e_area = spacing*h; flow*line_w = spacing; no ironing; see docs/MACHINE_FLAT_ZERO_IRON.md")
+    a("; UPPER_SPD:%.0f TOP_SPD:%.0f" % (upper_speed_mm_s, top_speed_mm_s))
     a(
         "; RETRACT:%.2fmm @%.0fmm/s WIPE:%.2fmm ZHOP:%.2f PA:%.4f"
         % (
@@ -88,6 +93,8 @@ def gen_bar(
     a("G92 E0")
     for line in gcode_apply_pa(profile):
         a(line)
+    a("FORGE_FLAT_SET LINE_W=%.3f FLOW=%.3f PA=%.4f Q_MAX=12.0" % (line_w, first_flow, profile.pressure_advance))
+    a("FORGE_FLAT_SURFACE_MODE ROLE=first")
     a("M106 S0")
     a("M221 S%d ; first-layer flow percent" % int(round(first_flow * 100)))
     a("; purge already in FORGE_PRINT_START_ENV (FORGE_PURGE) — extra short purge near part")
@@ -123,19 +130,32 @@ def gen_bar(
     for line in gcode_wipe_retract(cx, cy, first_h, last_dx, last_dy, profile, "end brim"):
         a(line)
 
+    n_layers = len(layers_z)
     for li, z in enumerate(layers_z):
         lh = first_h if li == 0 else (z - layers_z[li - 1])
         flow = first_flow if li == 0 else 1.0
         lw = line_w if li == 0 else upper_line_w
         sp = spacing if li == 0 else (upper_line_w * upper_spacing_ratio)
-        spd = first_spd if li == 0 else wall_spd
-        isp = first_spd if li == 0 else infill_spd
+        is_top = li == n_layers - 1 and li > 0
+        if li == 0:
+            spd = first_spd
+            isp = first_spd
+            a("FORGE_FLAT_SURFACE_MODE ROLE=first")
+        elif is_top:
+            spd = min(wall_spd, top_spd)
+            isp = top_spd
+            a("FORGE_FLAT_SURFACE_MODE ROLE=top")
+        else:
+            spd = wall_spd
+            isp = infill_spd
+            a("FORGE_FLAT_SURFACE_MODE ROLE=solid")
         if li == 1:
             a("M221 S100")
-        if li == 3:
-            a("M106 S64")
         a("")
-        a(";LAYER:%d Z=%.3f lw=%.2f flow=%.2f step=%.3f" % (li, z, lw, flow, sp))
+        a(
+            ";LAYER:%d Z=%.3f lw=%.2f flow=%.2f step=%.3f mono=%s isp=%d"
+            % (li, z, lw, flow, sp, monotonic, isp)
+        )
 
         sx, sy = x0, y0
         for line in gcode_travel_unretract(sx, sy, z, profile, "layer start"):
@@ -143,7 +163,7 @@ def gen_bar(
         cx, cy = sx, sy
         last_dx, last_dy = 1.0, 0.0
 
-        # walls — pitch = line width (side by side shells)
+        # walls — pitch = spacing (volume-matched shells)
         for peri in range(3):
             inset = peri * sp
             xa, ya = x0 + inset, y0 + inset
@@ -163,29 +183,25 @@ def gen_bar(
                 last_dx, last_dy = nx - cx, ny - cy
                 cx, cy = nx, ny
 
-        # solid fill — side-by-side rows (step = line width × spacing_ratio)
+        # solid fill — MONOTONIC (+X only) kills reverse-direction V-grooves
         inset = 3 * sp
         xa, ya = x0 + inset, y0 + inset
         xb, yb = x1 - inset, y1 - inset
         y = ya
-        direction = 1
-        first_infill = True
         while y <= yb + 1e-6:
-            if direction > 0:
+            if monotonic:
                 tx, ty, ex = xa, y, xb
             else:
-                tx, ty, ex = xb, y, xa
-            if first_infill:
-                for line in gcode_wipe_retract(cx, cy, z, last_dx, last_dy, profile, "to infill"):
-                    a(line)
-                for line in gcode_travel_unretract(tx, ty, z, profile):
-                    a(line)
-                first_infill = False
-            else:
-                for line in gcode_wipe_retract(cx, cy, z, last_dx, last_dy, profile, "infill gap"):
-                    a(line)
-                for line in gcode_travel_unretract(tx, ty, z, profile):
-                    a(line)
+                # legacy zigzag (not recommended for nail-flat)
+                # direction derived from row index
+                if int(round((y - ya) / sp)) % 2 == 0:
+                    tx, ty, ex = xa, y, xb
+                else:
+                    tx, ty, ex = xb, y, xa
+            for line in gcode_wipe_retract(cx, cy, z, last_dx, last_dy, profile, "infill"):
+                a(line)
+            for line in gcode_travel_unretract(tx, ty, z, profile):
+                a(line)
             cx, cy = tx, ty
             dist = abs(ex - tx)
             a(
@@ -195,7 +211,6 @@ def gen_bar(
             last_dx, last_dy = ex - tx, 0.0
             cx, cy = ex, ty
             y += sp
-            direction *= -1
 
         for line in gcode_wipe_retract(cx, cy, z, last_dx, last_dy, profile, "layer end"):
             a(line)
@@ -333,19 +348,44 @@ def main() -> int:
         help="row step / line_w; 1.0=side-by-side flat, <1 piles, >1 gaps",
     )
     ap.add_argument("--first-flow", type=float, default=1.0, help="first-layer flow multiplier")
-    ap.add_argument("--first-speed", type=float, default=12.0, help="first-layer speed mm/s")
+    ap.add_argument("--first-speed", type=float, default=30.0, help="first-layer speed mm/s")
+    ap.add_argument(
+        "--machine-flat",
+        action="store_true",
+        help="use forgeos.flat_surface machine_flat_pack (Q-limited high-speed solids, mono)",
+    )
     ap.add_argument("--use-stack", action="store_true")
     ap.add_argument("--ambient", type=float, default=14.0)
     args = ap.parse_args()
 
     bed, nozzle, soak = 65.0, 214.0, 5.0
     profile = HTPLA_BROZZL
-    # God-tier flat defaults (NOT the old pile-up pack 0.58w / 0.84 step / 1.14 flow)
+    # Machine-flat defaults: s=w, f=1, no pile-up (see docs/MACHINE_FLAT_ZERO_IRON.md)
     fl_w = float(args.line_w)
     fl_flow = float(args.first_flow)
     fl_spd = float(args.first_speed)
     sp_ratio = float(args.spacing_ratio)
     length = float(args.length)
+    upper_spd, top_spd = 120.0, 80.0
+    if args.machine_flat:
+        from forgeos.flat_surface import machine_flat_pack, pack_reports
+
+        pack = machine_flat_pack(pa=profile.pressure_advance)
+        fl_w = pack["first_layer"].line_width_mm
+        fl_flow = pack["first_layer"].flow
+        fl_spd = pack["first_layer"].speed_mm_s
+        sp_ratio = pack["first_layer"].spacing_ratio
+        upper_spd = pack["solid"].speed_mm_s
+        top_spd = pack["top_solid"].speed_mm_s
+        for name, rep in pack_reports(pack).items():
+            print(
+                "machine_flat",
+                name,
+                "v=%.1f" % pack[name].speed_mm_s,
+                "Q=%.2f" % rep.volumetric_mm3_s,
+                "nail_ok",
+                rep.nail_ok,
+            )
 
     if args.use_stack:
         from forgeos.stack_profile import compose_stack
@@ -384,6 +424,7 @@ def main() -> int:
             bed, nozzle, soak, profile,
             length=length,
             line_w=fl_w, first_flow=fl_flow, first_spd_mm_s=fl_spd, spacing_ratio=sp_ratio,
+            upper_speed_mm_s=upper_spd, top_speed_mm_s=top_spd, monotonic=True,
         )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(text, encoding="utf-8")
