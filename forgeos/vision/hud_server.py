@@ -31,7 +31,129 @@ if str(ROOT) not in sys.path:
 MOONRAKER = "http://192.168.1.178:7125"
 FILM_DIR = ROOT / "artifacts" / "film_cam"
 IPCAM_DIR = ROOT / "artifacts" / "ipcam_agent"
+SWARM_DIR = ROOT / "artifacts" / "film_swarm"
 PHONE_URL = "http://192.168.1.250:8080"
+
+# Full-screen agent HUD for the phone (open via ADB browser)
+PHONE_AGENTS_HTML = r"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<title>ForgeOS AGENTS LIVE</title>
+<style>
+  :root { --bg:#05080c; --fg:#e8f1ff; --mut:#7f96ad; --ok:#2dff9a; --bad:#ff4d6d; --line:#1b2a3d; --card:#0d1520; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--fg); font-family: ui-sans-serif, system-ui, sans-serif; }
+  header { position:sticky; top:0; z-index:5; background:rgba(5,8,12,.92); border-bottom:1px solid var(--line);
+    padding:10px 12px; display:flex; justify-content:space-between; align-items:center; backdrop-filter: blur(8px); }
+  header h1 { font-size:14px; margin:0; letter-spacing:.12em; }
+  .clk { font-variant-numeric: tabular-nums; color:var(--mut); font-size:12px; }
+  .banner { padding:8px 12px; font-size:12px; border-bottom:1px solid var(--line); color:var(--mut); }
+  .banner b { color:var(--ok); }
+  .agents { padding:10px; display:flex; flex-direction:column; gap:8px; }
+  .agent { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; display:grid;
+    grid-template-columns: 12px 1fr auto; gap:10px; align-items:center; }
+  .dot { width:12px; height:12px; border-radius:50%; background:#445; box-shadow:0 0 0 0 rgba(45,255,154,.4); }
+  .dot.on { background:var(--ok); animation: pulse 1.4s infinite; }
+  .dot.off { background:var(--bad); }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(45,255,154,.55);} 70%{box-shadow:0 0 0 10px rgba(45,255,154,0);} 100%{box-shadow:0 0 0 0 rgba(45,255,154,0);} }
+  .name { font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.06em; }
+  .role { color:var(--mut); font-size:11px; margin-top:2px; }
+  .badge { font-size:11px; padding:4px 8px; border-radius:999px; background:#132033; color:var(--mut); }
+  .badge.live { color:var(--ok); background:#0d2a1c; }
+  .metrics { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 10px 10px; }
+  .m { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px; }
+  .m .k { font-size:10px; color:var(--mut); text-transform:uppercase; }
+  .m .v { font-size:16px; margin-top:3px; font-variant-numeric:tabular-nums; }
+  .feed { padding:0 10px 10px; }
+  .feed img { width:100%; border-radius:12px; border:1px solid var(--line); background:#000; max-height:28vh; object-fit:cover; }
+  .log { margin:0 10px 20px; padding:10px; background:#070c12; border:1px solid var(--line); border-radius:10px;
+    font-size:10px; color:var(--mut); max-height:22vh; overflow:auto; white-space:pre-wrap; font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<header>
+  <h1>FORGEOS · AGENTS IRT</h1>
+  <div class="clk" id="clk">--:--:--</div>
+</header>
+<div class="banner" id="banner">booting swarm link…</div>
+<div class="feed"><img id="cam" src="/cam.jpg?t=0" alt="cam"/></div>
+<div class="metrics" id="metrics"></div>
+<div class="agents" id="agents"></div>
+<pre class="log" id="log">waiting for bus…</pre>
+<script>
+const ROLES = {
+  director: 'Shot plan · closeups · cues',
+  capture: 'Frames · bursts · latest.jpg',
+  optics: 'Focus · torch · quality',
+  adb: 'Wake · launch cam · screencap',
+  printer: 'Print events · milestones',
+  archive: 'Session footage archive',
+  comms: 'Bus aggregator · HUD state',
+  adaptive: 'Bed/nozzle process brain',
+  hud: 'This dashboard'
+};
+function fmt(ts){ return new Date().toLocaleTimeString(); }
+async function tick(){
+  document.getElementById('clk').textContent = fmt();
+  try {
+    const r = await fetch('/api/state?phone=1');
+    const s = await r.json();
+    document.getElementById('cam').src = '/cam.jpg?t=' + Date.now();
+    const swarm = s.swarm || {};
+    const recent = (swarm.recent || s.recent || []).slice().reverse();
+    const agentsSeen = {};
+    (recent||[]).forEach(m => {
+      if (m.sender) agentsSeen[m.sender] = m;
+      if (m.topic && m.topic.startsWith('swarm.agent')) {
+        const a = (m.payload||{}).agent || m.sender;
+        agentsSeen[a] = m;
+      }
+    });
+    // known roster always shown
+    const roster = ['director','capture','optics','adb','printer','archive','comms'];
+    const live = (s.live||'') + ' ' + (s.swarm_live||'');
+    const camOn = /ONLINE|CAPTURE ONLINE|http=True/i.test(live) || (s.film && s.film.stats && s.film.stats.http_ok);
+    const pr = s.printer || {};
+    const ps = pr.print_stats || {};
+    const e = pr.extruder || {};
+    const b = pr.heater_bed || {};
+    document.getElementById('banner').innerHTML =
+      `CAM <b>${camOn?'ONLINE':'OFFLINE'}</b> · PRINT <b>${ps.state||'?'}</b> · SWARM <b>${s.swarm_up?'ACTIVE':'…'}</b> · Z <b>${((pr.gcode_move||{}).homing_origin||[0,0,'?'])[2]}</b>`;
+    document.getElementById('metrics').innerHTML = `
+      <div class="m"><div class="k">Nozzle</div><div class="v">${(e.temperature||0).toFixed(0)}° / ${(e.target||0).toFixed(0)}°</div></div>
+      <div class="m"><div class="k">Bed</div><div class="v">${(b.temperature||0).toFixed(0)}°</div></div>
+      <div class="m"><div class="k">Progress</div><div class="v">${(((pr.virtual_sdcard||{}).progress||0)*100).toFixed(0)}%</div></div>
+      <div class="m"><div class="k">Bus msgs</div><div class="v">${(recent||[]).length}</div></div>`;
+    const now = Date.now()/1000;
+    document.getElementById('agents').innerHTML = roster.map(name => {
+      const m = agentsSeen[name];
+      const age = m ? (now - (m.ts||0)) : 999;
+      const on = age < 15;
+      const last = m ? (m.topic || '') : 'waiting';
+      return `<div class="agent">
+        <div class="dot ${on?'on':'off'}"></div>
+        <div><div class="name">${name}</div><div class="role">${ROLES[name]||''}<br/><span style="opacity:.7">${last}</span></div></div>
+        <div class="badge ${on?'live':''}">${on?'LIVE':'—'} ${on?Math.max(0,age|0)+'s':''}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('log').textContent = (recent||[]).slice(0,18).map(m =>
+      `${new Date((m.ts||0)*1000).toLocaleTimeString()}  ${m.sender} → ${m.topic}`
+    ).join('\n') || 'no messages yet — start swarm';
+  } catch(e) {
+    document.getElementById('banner').innerHTML = 'HUD link error — is Mac server up?';
+  }
+}
+setInterval(tick, 600);
+tick();
+// keep screen suggestion
+try { screen.orientation && screen.orientation.lock('portrait'); } catch(e){}
+</script>
+</body>
+</html>
+"""
 
 
 def _get_printer() -> Dict[str, Any]:
@@ -209,9 +331,17 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             self._send(200, HTML.encode(), "text/html; charset=utf-8")
             return
+        if path in ("/agents", "/phone", "/phone-hud", "/irt"):
+            self._send(200, PHONE_AGENTS_HTML.encode(), "text/html; charset=utf-8")
+            return
         if path == "/cam.jpg":
-            for p in (FILM_DIR / "latest.jpg", IPCAM_DIR / "latest.jpg"):
-                if p.exists():
+            for p in (
+                SWARM_DIR / "latest.jpg",
+                FILM_DIR / "latest.jpg",
+                IPCAM_DIR / "latest.jpg",
+                SWARM_DIR / "frames" / "latest.jpg",
+            ):
+                if p.exists() and p.stat().st_size > 500:
                     self._send(200, p.read_bytes(), "image/jpeg")
                     return
             # live fetch
@@ -235,15 +365,23 @@ class Handler(BaseHTTPRequestHandler):
             film = _read_json(FILM_DIR / "hud_state.json")
             if not film:
                 film = _read_json(IPCAM_DIR / "status.json")
+            swarm = _read_json(SWARM_DIR / "swarm_state.json")
             live = ""
-            for p in (FILM_DIR / "LIVE", IPCAM_DIR / "LIVE"):
+            for p in (SWARM_DIR / "LIVE", FILM_DIR / "LIVE", IPCAM_DIR / "LIVE"):
                 if p.exists():
                     live = p.read_text(encoding="utf-8")
                     break
+            swarm_live = ""
+            if (SWARM_DIR / "SWARM_LIVE").exists():
+                swarm_live = (SWARM_DIR / "SWARM_LIVE").read_text(encoding="utf-8")
             payload = {
                 "printer": _get_printer(),
                 "film": film,
+                "swarm": swarm,
+                "recent": (swarm.get("recent") if isinstance(swarm, dict) else None) or [],
                 "live": live,
+                "swarm_live": swarm_live,
+                "swarm_up": bool(swarm_live) or bool(swarm.get("recent")),
                 "ts": time.time(),
             }
             self._send(200, json.dumps(payload).encode(), "application/json")
