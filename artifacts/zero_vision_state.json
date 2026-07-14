@@ -1,0 +1,23 @@
+{
+  "armed": false,
+  "mode": "suggest",
+  "z_adjust_mm": -0.48,
+  "flow": 1.0,
+  "pa": 0.02725,
+  "pa_smooth": 0.03,
+  "speed_factor": 1.0,
+  "line_w": 0.44,
+  "spacing_ratio": 1.0,
+  "layer_h": 0.28,
+  "base_bed_c": 65.0,
+  "base_nozzle_c": 214.0,
+  "ticks": 4,
+  "last_apply_ts": 0.0,
+  "min_apply_interval_s": 2.0,
+  "bed_uniform_ema": 0.841071458333334,
+  "nozzle_track_ema": 0.5,
+  "flat_volume_ema": 0.841796875,
+  "moisture_risk_ema": 0.3759765625,
+  "precision_belief": 0.7063741718750002,
+  "alpha": 0.25
+}
