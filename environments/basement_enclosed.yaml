@@ -1,0 +1,13 @@
+name: basement_enclosed
+description: >
+  Same basement climate but printer in enclosure / tent.
+  Slightly shorter soaks, higher usable speed, controlled cool-down.
+tags: [basement, cold, humid, enclosed]
+ambient:
+  temperature_c: 16.0
+  rh_percent: 60.0
+  enclosure: enclosed
+  chamber_temperature_c: 28.0
+  draft_level: 0.05
+  source: profile
+  notes: Chamber temp is approximate until a real sensor is added.

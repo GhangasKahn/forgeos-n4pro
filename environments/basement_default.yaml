@@ -1,0 +1,12 @@
+name: basement_default
+description: >
+  Cool, elevated-RH basement shop. Open frame printer common.
+  Longer dual-bed soaks, adhesion-first first layer, staged cool-down.
+tags: [basement, cold, humid, open]
+ambient:
+  temperature_c: 14.0
+  rh_percent: 65.0
+  enclosure: open
+  draft_level: 0.30
+  source: profile
+  notes: Update with a $10 thermo-hygrometer; winter often colder/wetter.

@@ -39,12 +39,22 @@ class MoonrakerClient:
         return self._get("/printer/info")
 
     def objects_query(self, object_names: List[str]) -> Dict[str, Any]:
-        query = "&".join(object_names)
+        # Spaces in names like "heater_generic heater_bed_outer" must be encoded
+        query = "&".join(urllib.parse.quote(name, safe="") for name in object_names)
         return self._get("/printer/objects/query?" + query)
 
-    def gcode(self, script: str) -> Dict[str, Any]:
+    def gcode(self, script: str, timeout_s: Optional[float] = None) -> Dict[str, Any]:
         qs = urllib.parse.urlencode({"script": script})
-        return self._post("/printer/gcode/script?" + qs)
+        path = "/printer/gcode/script?" + qs
+        if timeout_s is None:
+            return self._post(path)
+        # temporary timeout override for long waits (heat/mesh)
+        old = self.timeout_s
+        self.timeout_s = float(timeout_s)
+        try:
+            return self._post(path)
+        finally:
+            self.timeout_s = old
 
     def firmware_restart(self) -> Dict[str, Any]:
         return self._post("/printer/firmware_restart")

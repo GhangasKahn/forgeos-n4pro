@@ -1,0 +1,9 @@
+name: garage_hot_dry
+description: Hot dry garage / summer shop — heat soak less critical, watch overtemp.
+tags: [garage, hot, dry]
+ambient:
+  temperature_c: 32.0
+  rh_percent: 30.0
+  enclosure: open
+  draft_level: 0.15
+  source: profile

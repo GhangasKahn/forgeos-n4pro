@@ -6,6 +6,8 @@
 [include forgeos/forge_mesh.cfg]
 [include forgeos/forge_extrusion.cfg]
 [include forgeos/forge_macros.cfg]
+[include forgeos/forge_moisture.cfg]
+[include forgeos/forge_environment.cfg]
 
 # Keep Mainsail client macros if present
 # [include mainsail.cfg]

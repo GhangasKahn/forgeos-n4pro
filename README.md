@@ -57,7 +57,23 @@ Fast-and-wrong never promotes.
 - ADXL or Beacon/Eddy
 - Dryer + calipers + anneal oven
 
+## Moisture (no dryer sensor)
+
+Soft-sensor from hotend **temp droop + heater power** under extrusion → risk score → safe flow/temp/speed response.  
+Not absolute water %. See [docs/moisture_soft_sensor.md](docs/moisture_soft_sensor.md).
+
+## Environment / basement homeostasis
+
+Optimizes **before / during / after** for cold, humid basements, open vs enclosed, drafts, and other shop climates.  
+Self-anneals parameters toward a stable attractor per environment bin.
+
+```bash
+python3 scripts/env_plan.py --profile environments/basement_default.yaml
+```
+
+See [docs/environment_homeostasis.md](docs/environment_homeostasis.md).
+
 ## Status
 
-**Phase 0 complete:** skeleton, materials, safety, journal, optimizers, gates, Klipper overlays, unit tests.  
+**Phase 0 complete:** skeleton, materials, safety, journal, optimizers, gates, moisture soft-sensor, Klipper overlays, unit tests.  
 Next: Phase 1 live dual-bed/print baseline on the printer + journal T0 cycle time.
