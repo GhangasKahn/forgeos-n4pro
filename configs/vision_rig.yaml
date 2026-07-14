@@ -10,7 +10,7 @@ printer:
 # Set url after Start server, e.g. http://192.168.1.42:8080
 phone_camera:
   enabled: true
-  url: ""   # fill in: http://PHONE_LAN_IP:8080
+  url: "http://192.168.1.250:8080"  # Nothing Phone 4a Pro / IP Webcam
   role: oblique_or_chamber  # mount phone looking at bed / first layer
   snapshot_path: "/shot.jpg"
   notes: "IP Webcam app → Start server → same Wi-Fi as Mac"
