@@ -97,16 +97,30 @@ class IPCamAgent:
         self.fail_reconnect_after = max(1, int(fail_reconnect_after))
 
         self.out_dir.mkdir(parents=True, exist_ok=True)
-        self.control = PhoneControl(self.url)
+        self.control = PhoneControl(self.url, timeout_s=4.0)
         self.source = PhoneCameraSource(
-            self.url, save_dir=str(self.out_dir), timeout_s=3.0
+            self.url, save_dir=str(self.out_dir), timeout_s=5.0
         )
         self.stats = AgentStats()
         self._last_focus_ts = 0.0
         self._optimized = False
+        self._decode_every = 5  # full pixel decode every N ticks (keep link fast)
+        # always-on connection file for other tools
+        self.live_path = self.out_dir / "LIVE"
 
     def bootstrap(self) -> None:
-        log.info("bootstrap optimize-for-bed url=%s", self.url)
+        log.info("bootstrap FULL-TIME cam link url=%s", self.url)
+        # Wait until phone is actually up (user may reopen IP Webcam)
+        for i in range(30):
+            ping = self.source.ping()
+            if ping.get("ok"):
+                log.info("camera ONLINE %s", ping)
+                break
+            log.warning("waiting for camera… try %d/30 err=%s", i + 1, ping.get("error"))
+            time.sleep(1.0)
+        else:
+            log.error("camera still offline — agent will keep retrying every tick")
+
         try:
             res = self.control.optimize_for_bed()
             self.control.quality(self.quality)
@@ -114,10 +128,6 @@ class IPCamAgent:
             self._optimized = True
         except Exception as exc:  # noqa: BLE001
             log.warning("bootstrap optimize failed: %s", exc)
-        ping = self.source.ping()
-        log.info("ping %s", ping)
-        if not ping.get("ok"):
-            log.warning("camera not reachable yet — will keep trying")
 
     def _write_status(self) -> None:
         path = self.out_dir / "status.json"
@@ -169,9 +179,18 @@ class IPCamAgent:
         """One monitor cycle. Returns True if frame OK."""
         self.stats.ticks += 1
         try:
-            fr = grab_phone_frame(self.url, timeout_s=3.5)
-            rows = fr.gray_rows or [0.0]
+            # Full-time link: always pull /shot.jpg with retries; decode less often
+            do_decode = (self.stats.ticks % self._decode_every) == 1
+            fr = grab_phone_frame(
+                self.url,
+                timeout_s=6.0,
+                decode=do_decode,
+                retries=4,
+            )
+            rows = fr.gray_rows or [self.stats.last_mean_luma or 100.0]
             mean_luma = sum(rows) / max(1, len(rows))
+            if not do_decode and self.stats.last_mean_luma > 0:
+                mean_luma = self.stats.last_mean_luma
 
             self.stats.ok_ticks += 1
             self.stats.consecutive_fails = 0
@@ -180,37 +199,60 @@ class IPCamAgent:
             self.stats.last_jpeg_bytes = len(fr.jpeg)
             self.stats.last_width = fr.width
             self.stats.last_height = fr.height
-            self.stats.last_coverage = fr.coverage
-            self.stats.last_mean_luma = mean_luma
+            if do_decode:
+                self.stats.last_coverage = fr.coverage
+                self.stats.last_mean_luma = mean_luma
 
-            if self.stats.ticks % self.snapshot_every == 0:
-                (self.out_dir / "latest.jpg").write_bytes(fr.jpeg)
-                # rolling hourly-ish copy every 60 ok frames
-                if self.stats.ok_ticks % 60 == 0:
-                    stamp = time.strftime("%Y%m%d_%H%M%S")
-                    (self.out_dir / ("snap_%s.jpg" % stamp)).write_bytes(fr.jpeg)
+            # Always refresh latest frame (proves full-time link)
+            (self.out_dir / "latest.jpg").write_bytes(fr.jpeg)
+            self.live_path.write_text(
+                "ONLINE %s ticks=%d ok_rate=%.2f\n"
+                % (
+                    time.strftime("%H:%M:%S"),
+                    self.stats.ticks,
+                    self.stats.ok_ticks / max(1, self.stats.ticks),
+                ),
+                encoding="utf-8",
+            )
+            if self.stats.ok_ticks % 60 == 0:
+                stamp = time.strftime("%Y%m%d_%H%M%S")
+                (self.out_dir / ("snap_%s.jpg" % stamp)).write_bytes(fr.jpeg)
+
+            # keep-alive hit so IP Webcam doesn't idle-drop clients
+            try:
+                self.control.status()
+            except Exception:  # noqa: BLE001
+                pass
 
             self._maintain_optics(mean_luma)
             self._write_status()
 
-            if self.stats.ticks % 10 == 0:
+            if self.stats.ticks % 5 == 0:
                 log.info(
-                    "ok tick=%d %dx%d luma=%.0f cov=%.2f fails=%d torch=%s",
+                    "ONLINE tick=%d %dx%d jpeg=%d luma=%.0f cov=%.2f fails=%d reconnects=%d",
                     self.stats.ticks,
                     fr.width,
                     fr.height,
+                    len(fr.jpeg),
                     mean_luma,
-                    fr.coverage,
+                    self.stats.last_coverage,
                     self.stats.fail_ticks,
-                    self.stats.torch_on,
+                    self.stats.reconnects,
                 )
             return True
         except Exception as exc:  # noqa: BLE001
             self.stats.fail_ticks += 1
             self.stats.consecutive_fails += 1
             self.stats.last_error = str(exc)
+            try:
+                self.live_path.write_text(
+                    "OFFLINE %s err=%s\n" % (time.strftime("%H:%M:%S"), exc),
+                    encoding="utf-8",
+                )
+            except Exception:  # noqa: BLE001
+                pass
             log.warning(
-                "FAIL tick=%d consec=%d err=%s",
+                "OFFLINE tick=%d consec=%d err=%s",
                 self.stats.ticks,
                 self.stats.consecutive_fails,
                 exc,

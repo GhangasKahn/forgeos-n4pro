@@ -47,8 +47,18 @@ def _http_get(url: str, timeout_s: float = 3.0) -> bytes:
         return resp.read()
 
 
-def fetch_jpeg(base_url: str, timeout_s: float = 3.0) -> bytes:
-    """Fetch one JPEG from phone camera server."""
+def fetch_jpeg(
+    base_url: str,
+    timeout_s: float = 5.0,
+    *,
+    retries: int = 3,
+    allow_mjpeg_fallback: bool = False,
+) -> bytes:
+    """Fetch one JPEG from phone camera server.
+
+    Prefer /shot.jpg only — MJPEG /video is huge and was causing agent timeouts
+    and 'no connection' flapping when used as a fallback every failure.
+    """
     base = base_url.rstrip("/")
     # Direct image URL?
     if base.lower().endswith((".jpg", ".jpeg", ".png")):
@@ -58,30 +68,31 @@ def fetch_jpeg(base_url: str, timeout_s: float = 3.0) -> bytes:
         base + "/shot.jpg",
         base + "/photo.jpg",
         base + "/jpg",
-        base + "/capture",
     ]
     last_err: Optional[Exception] = None
-    for url in candidates:
+    for attempt in range(max(1, retries)):
+        for url in candidates:
+            try:
+                data = _http_get(url, timeout_s)
+                if len(data) > 500 and data[:2] == b"\xff\xd8":
+                    return data
+                last_err = RuntimeError("non-JPEG response from %s (%d bytes)" % (url, len(data)))
+            except Exception as exc:  # noqa: BLE001
+                last_err = exc
+                continue
+        # brief backoff between retries
+        if attempt + 1 < retries:
+            time.sleep(0.15 * (attempt + 1))
+
+    if allow_mjpeg_fallback:
         try:
-            data = _http_get(url, timeout_s)
-            if len(data) > 500 and data[:2] == b"\xff\xd8":
-                return data
-            # some servers return JSON error with 200
-            if data[:2] == b"\xff\xd8":
-                return data
+            return _first_jpeg_from_mjpeg(base + "/video", timeout_s=min(timeout_s, 4.0))
         except Exception as exc:  # noqa: BLE001
             last_err = exc
-            continue
-
-    # MJPEG: read until first JPEG
-    try:
-        return _first_jpeg_from_mjpeg(base + "/video", timeout_s=max(timeout_s, 5.0))
-    except Exception as exc:  # noqa: BLE001
-        last_err = exc
 
     raise RuntimeError(
         "Could not fetch phone JPEG from %s (last error: %s). "
-        "Install IP Webcam, Start server, allow HTTP, same Wi‑Fi."
+        "Keep IP Webcam foreground, screen on, same Wi‑Fi."
         % (base_url, last_err)
     )
 
@@ -236,9 +247,19 @@ def _jpeg_size(jpeg: bytes) -> Tuple[int, int]:
     return 0, 0
 
 
-def grab_phone_frame(base_url: str, timeout_s: float = 3.0) -> PhoneFrame:
-    jpeg = fetch_jpeg(base_url, timeout_s=timeout_s)
-    rows, w, h, cov = _decode_gray_rows(jpeg)
+def grab_phone_frame(
+    base_url: str,
+    timeout_s: float = 5.0,
+    *,
+    decode: bool = True,
+    retries: int = 3,
+) -> PhoneFrame:
+    jpeg = fetch_jpeg(base_url, timeout_s=timeout_s, retries=retries, allow_mjpeg_fallback=False)
+    if decode:
+        rows, w, h, cov = _decode_gray_rows(jpeg)
+    else:
+        w, h = _jpeg_size(jpeg)
+        rows, cov = [128.0], 0.5
     return PhoneFrame(
         jpeg=jpeg,
         width=w,
@@ -262,7 +283,7 @@ def score_phone_frame(base_url: str, timeout_s: float = 3.0) -> FirstLayerResult
 class PhoneCameraSource:
     """Callable vision source for RealtimeVisionLoop.vision_feature_fn."""
 
-    def __init__(self, base_url: str, timeout_s: float = 2.5, save_dir: Optional[str] = None):
+    def __init__(self, base_url: str, timeout_s: float = 5.0, save_dir: Optional[str] = None):
         self.base_url = base_url.rstrip("/")
         self.timeout_s = timeout_s
         self.save_dir = save_dir
@@ -271,7 +292,7 @@ class PhoneCameraSource:
 
     def __call__(self) -> Optional[FirstLayerResult]:
         try:
-            fr = grab_phone_frame(self.base_url, timeout_s=self.timeout_s)
+            fr = grab_phone_frame(self.base_url, timeout_s=self.timeout_s, retries=3)
             self._n += 1
             self.last_error = None
             if self.save_dir and self._n % 20 == 1:
