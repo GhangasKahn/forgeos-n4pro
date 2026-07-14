@@ -88,17 +88,27 @@ python3 scripts/env_plan.py --profile environments/basement_default.yaml
 
 See [docs/environment_homeostasis.md](docs/environment_homeostasis.md).
 
-## Vision + Jetson ML (auto-cal path)
+## Zero-vision adaptive control (primary — no cameras)
 
-Multi-view RGB + IR on **NVIDIA Jetson**; printer stays motion/safety-only.
+Closed-loop **dual-bed + nozzle + flat + PA/flow/speed** from Moonraker only.  
+Push N4 Pro toward 10k-class process control **before** buying vision.
 
-- Architecture & shopping list: [docs/VISION_ML_JETSON_STACK.md](docs/VISION_ML_JETSON_STACK.md)
-- Rig config: [configs/vision_rig.yaml](configs/vision_rig.yaml)
-- Jetson service stub: `python3 -m forgeos.vision.service --moonraker http://192.168.1.178:7125`
+```bash
+# Safe real-time brain (suggest-only)
+python3 -m forgeos.adaptive.service --interval 0.5 -v
+# After validation:
+python3 -m forgeos.adaptive.service --interval 0.5 --arm
+```
 
-**Cameras (v1):** chamber + nozzle + oblique RGB; **IR** bed map; **no LiDAR** (probe does Z better on this machine).
+→ [docs/ZERO_VISION_10K.md](docs/ZERO_VISION_10K.md) · [docs/MACHINE_FLAT_ZERO_IRON.md](docs/MACHINE_FLAT_ZERO_IRON.md)
 
-**Full shopping list / SKU BOM (from zero → god-tier):** [docs/BOM_GOD_TIER_VISION_RIG.md](docs/BOM_GOD_TIER_VISION_RIG.md)
+## Vision + Jetson ML (optional later)
+
+Multi-view RGB + IR on **NVIDIA Jetson** *adds* observations; does not replace zero-vision brain.
+
+- Architecture: [docs/VISION_ML_JETSON_STACK.md](docs/VISION_ML_JETSON_STACK.md)
+- Real-time vision loop: `python3 -m forgeos.vision.service --interval 0.25`
+- BOM: [docs/BOM_GOD_TIER_VISION_RIG.md](docs/BOM_GOD_TIER_VISION_RIG.md)
 
 **Restore shop process state after reboot:**
 ```bash
