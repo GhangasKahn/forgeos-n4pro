@@ -103,7 +103,7 @@ Multi-view RGB + IR on **NVIDIA Jetson**; printer stays motion/safety-only.
 **Restore shop process state after reboot:**
 ```bash
 python3 scripts/restore_saved_state.py
-# state file: configs/saved_state_shop_n4pro.yaml  (Z=-0.485, PEX, Brozzl, HTPLA, 65/214)
+# state file: configs/saved_state_shop_n4pro.yaml  (Z=-0.480, PEX, Brozzl, HTPLA, 65/214)
 ```
 
 ## Testing sheet
