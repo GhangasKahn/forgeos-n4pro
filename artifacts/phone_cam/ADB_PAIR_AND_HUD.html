@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>ForgeOS ADB + HUD</title>
+<style>body{font-family:system-ui;max-width:720px;margin:24px auto;padding:0 16px;line-height:1.45}
+.card{border:1px solid #ddd;border-radius:12px;padding:16px;margin:16px 0} code{background:#f4f4f4;padding:2px 6px;border-radius:4px}
+img{max-width:220px}</style></head><body>
+<h1>Full ADB + Film HUD</h1>
+<div class=card>
+<h2>1. Enable Wireless debugging</h2>
+<ol>
+<li>Settings → About phone → tap <b>Build number</b> 7 times</li>
+<li>Settings → System → <b>Developer options</b></li>
+<li>Turn on <b>Wireless debugging</b></li>
+<li>Open it → <b>Pair device with pairing code</b></li>
+<li>Tell Grok the <b>IP:port</b> and <b>6-digit code</b></li>
+</ol>
+</div>
+<div class=card>
+<h2>2. After pair — HUD</h2>
+<p>On Mac: <code>open http://127.0.0.1:8787/</code></p>
+<p>Live camera + printer temps + ADB screen when paired.</p>
+</div>
+<div class=card>
+<h2>Docs</h2>
+<img src="qr_adb_hud_docs.png" alt="docs QR"/>
+</div>
+</body></html>
