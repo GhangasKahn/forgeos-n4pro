@@ -1,0 +1,48 @@
+sku: protopasta_htpla
+name: "Protopasta HTPLA"
+family: htpla
+version: 1
+abrasive: false
+nozzle:
+  required_type: hardened  # recommended even for non-CF for shop consistency
+  min_diameter_mm: 0.4
+  preferred_diameter_mm: 0.4
+density_g_cm3: 1.24
+temps:
+  nozzle_c: [205, 225]
+  nozzle_default_c: 215
+  bed_c: [50, 65]
+  bed_default_c: 60
+max_volumetric_flow_mm3_s: 12.0
+pressure_advance_seed: 0.030
+flow_multiplier_seed: 1.00
+role_speeds_mm_s:
+  first_layer: 30
+  outer_wall: 60
+  inner_wall: 120
+  infill: 180
+  travel: 300
+role_accel_mm_s2:
+  outer_wall: 3000
+  inner_wall: 5000
+  infill: 7000
+  travel: 8000
+anneal:
+  temp_c: 110
+  hold_min: 60
+  cool_rate: "oven_off_natural"
+  # Seeds: oversize CAD before anneal (learned later by cal campaign)
+  xy_scale: 1.025
+  z_scale: 0.980
+  hole_extra_mm: 0.10
+part_class_defaults:
+  jig: balanced
+  drill_guide: max_accuracy
+  clamp_pad: balanced
+  fence_stop: max_accuracy
+  sacrificial_fixture: max_speed_feasible
+  bulk_spacer: max_speed_feasible
+notes:
+  - Higher nozzle temps improve interlayer fusion vs commodity PLA.
+  - Anneal increases heat resistance; always re-measure critical dims post-anneal.
+  - Dry filament before precision fixtures.

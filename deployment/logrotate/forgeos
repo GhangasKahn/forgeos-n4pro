@@ -1,0 +1,9 @@
+/home/mks/forgeos-n4pro/logs/*.log {
+    weekly
+    rotate 4
+    compress
+    missingok
+    notifempty
+    copytruncate
+    maxsize 5M
+}

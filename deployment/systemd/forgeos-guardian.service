@@ -1,0 +1,16 @@
+[Unit]
+Description=ForgeOS Guardian (reliability monitor)
+After=network.target moonraker.service
+Wants=moonraker.service
+
+[Service]
+Type=simple
+User=mks
+WorkingDirectory=/home/mks/forgeos-n4pro
+Environment=PYTHONPATH=/home/mks/forgeos-n4pro
+ExecStart=/usr/bin/python3 -m forgeos.runtime.guardian
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

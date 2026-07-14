@@ -1,0 +1,48 @@
+sku: protopasta_htpla_cf
+name: "Protopasta HTPLA-CF"
+family: htpla_cf
+version: 1
+abrasive: true
+nozzle:
+  required_type: hardened
+  min_diameter_mm: 0.5
+  preferred_diameter_mm: 0.6
+density_g_cm3: 1.30
+temps:
+  nozzle_c: [210, 230]
+  nozzle_default_c: 220
+  bed_c: [50, 65]
+  bed_default_c: 60
+max_volumetric_flow_mm3_s: 8.0
+pressure_advance_seed: 0.028
+flow_multiplier_seed: 0.98
+role_speeds_mm_s:
+  first_layer: 25
+  outer_wall: 50
+  inner_wall: 90
+  infill: 140
+  travel: 280
+role_accel_mm_s2:
+  outer_wall: 2500
+  inner_wall: 4000
+  infill: 5500
+  travel: 7000
+anneal:
+  temp_c: 110
+  hold_min: 60
+  cool_rate: "oven_off_natural"
+  xy_scale: 1.015
+  z_scale: 0.990
+  hole_extra_mm: 0.08
+part_class_defaults:
+  jig: balanced
+  drill_guide: max_accuracy
+  clamp_pad: balanced
+  fence_stop: max_accuracy
+  sacrificial_fixture: max_speed_feasible
+  bulk_spacer: max_speed_feasible
+notes:
+  - HARDENED nozzle mandatory. Soft brass is a hard preflight FAIL.
+  - Prefer >=0.5 mm nozzle; 0.4 clogs frequently with metal/CF composites.
+  - Lower volumetric flow than pure HTPLA; speed comes from motion, not over-extrusion.
+  - Minimize filament path bends; abrasive wear accelerates at sharp PTFE elbows.
