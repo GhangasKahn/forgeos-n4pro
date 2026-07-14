@@ -127,7 +127,11 @@ def gen(bed=65.0, nozzle=214.0, soak=3.0, size=50.0, solid_layers=4) -> str:
             )
         )
     a("")
-    a("FORGE_PRINT_START_ENV BED=%.2f EXTRUDER=%.2f SOAK=%.2f" % (bed, nozzle, soak))
+    # MESH=0 + short soak for fast adaptive iteration (profile default must exist)
+    a(
+        "FORGE_PRINT_START_ENV BED=%.2f EXTRUDER=%.2f SOAK=%.2f MESH=0"
+        % (bed, nozzle, soak)
+    )
     a("M83")
     a("G90")
     a("G92 E0")
@@ -185,7 +189,7 @@ def main() -> int:
     ap.add_argument("-o", "--output", type=Path, required=True)
     ap.add_argument("--bed", type=float, default=65.0)
     ap.add_argument("--nozzle", type=float, default=214.0)
-    ap.add_argument("--soak", type=float, default=3.0)
+    ap.add_argument("--soak", type=float, default=1.0)
     ap.add_argument("--size", type=float, default=50.0)
     ap.add_argument("--solid-layers", type=int, default=4)
     args = ap.parse_args()
