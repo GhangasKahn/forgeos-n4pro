@@ -62,16 +62,17 @@ ssh mks@192.168.1.178 'echo makerbase | sudo -S systemctl stop omniforge-runtime
 ## Permanent probe calibration (later)
 After good live Z, run paper test + `PROBE_CALIBRATE` / `SAVE_CONFIG` so `z_offset` in printer.cfg matches reality (replaces babystep dependence).
 
-## Ribbed rows (not a flat sheet)
+## Ribbed / piled rows (not a flat sheet)
 
-If Z is “good” (sticks, no scrape) but each **row looks like a rib/cord** instead of one smooth plane:
+**God-tier flat rule:** lines **side by side** — `step ≈ line_width` (`spacing_ratio = 1.0`), flow ≈ **1.0**.  
+Do **not** stack heavy overlap (old 0.58w / 0.84 step / 114% pile-up pack). See `docs/FLAT_FIRST_LAYER.md`.
 
 | Cause | Fix |
 |---|---|
-| Lines not overlapping enough | Wider first-layer line (**0.58 mm** on 0.4 nozzle) + spacing ratio **0.84** |
-| Not enough plastic to merge beads | First-layer flow **~114%** (`M221 S114`) |
-| Melt too cool (plated copper set low) | Nozzle **214 °C** (not 210) so adjacent beads weld |
-| Z still a hair high | One click `FORGE_BABY_DOWN` only |
-| Too fast | First layer **15 mm/s** |
+| Heavy overlap / raised ridges | `spacing_ratio=1.0`, line_w≈**0.44**, flow **1.00** |
+| Tiny gaps between lines | ratio **0.97–0.98** or flow **1.02–1.04** only |
+| Melt too cool (plated copper) | Nozzle **214 °C** so edges weld without pile |
+| Z a hair high (round beads) | One click `FORGE_BABY_DOWN` |
+| Too fast | First layer **12 mm/s** |
 
-v2 Z-tune / bar gcode uses the flat-sheet pack. Ribs that remain after that → slight `BABY_DOWN`.
+v6 bar / v3 z-tune use the flat pack. Piles → less overlap; gaps → tiny ratio cut, not 0.84 pile.
