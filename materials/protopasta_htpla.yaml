@@ -1,40 +1,84 @@
 sku: protopasta_htpla
 name: "Protopasta HTPLA"
 family: htpla
-version: 1
+version: 2
 abrasive: false
+# Optimized stack: Wham Bam PEX + Brozzl Ni-Cu 0.4 + basement-capable
+hardware_profile: stack_pex_brozzl_htpla
 nozzle:
-  required_type: hardened  # recommended even for non-CF for shop consistency
+  required_type: soft_ok  # brass / brozzl ni-cu OK; hardened fine too
   min_diameter_mm: 0.4
   preferred_diameter_mm: 0.4
+  preferred_hardware: brozzl_nickel_copper_n4pro
 density_g_cm3: 1.24
+# Protopasta HTPLA material science (operator-validated brand for this shop):
+# - Semi-crystalline PLA engineered for optional post-anneal heat resistance
+# - Prefers hotter melt than commodity PLA for interlayer fusion
+# - Moisture sensitive: wet spool → stringing, pops, weak walls (dry if humid basement)
+# - On PEX: adhesion is excellent when bed is clean + ~65 C + proper Z squish
 temps:
   nozzle_c: [205, 225]
   nozzle_default_c: 215
-  bed_c: [50, 65]
-  bed_default_c: 60
+  # PEX-optimized bed (Wham Bam class powder-coat)
+  bed_c: [60, 70]
+  bed_default_c: 65
 max_volumetric_flow_mm3_s: 12.0
-pressure_advance_seed: 0.030
+pressure_advance_seed: 0.028
 flow_multiplier_seed: 1.00
 role_speeds_mm_s:
-  first_layer: 30
-  outer_wall: 60
-  inner_wall: 120
-  infill: 180
-  travel: 300
+  first_layer: 18
+  outer_wall: 55
+  inner_wall: 100
+  infill: 160
+  travel: 250
 role_accel_mm_s2:
-  outer_wall: 3000
-  inner_wall: 5000
-  infill: 7000
-  travel: 8000
+  outer_wall: 2500
+  inner_wall: 4500
+  infill: 6000
+  travel: 7000
+first_layer:
+  # Flat sheet on PEX (not "ribs"): fat lines + overlap + enough melt to fuse rows
+  height_mm: 0.28
+  line_width_mm: 0.58   # ~145% of 0.4 nozzle — lateral fill
+  speed_mm_s: 15
+  flow: 1.14            # merge adjacent beads into one plane
+  spacing_ratio: 0.84   # center-to-center = width * ratio (<1 = overlap)
+  fan_percent: 0
+  brim: true
+  bed_c: 65
+  nozzle_c: 214         # plated copper: a bit hotter than 210 so rows weld flat
+retract:
+  # Geared N4 Pro (high ratio) + Brozzl Ni-Cu melt zone:
+  # ooze/hanging whiskers need wipe-before-retract + enough pullback, no extra unretract.
+  length_mm: 1.15
+  unretract_mm: 1.15
+  unretract_extra_mm: 0.0
+  speed_mm_s: 40
+  unretract_speed_mm_s: 30
+  z_hop_mm: 0.25
+  wipe_mm: 1.4
+  wipe_speed_mm_s: 80
+  wipe_before_retract: true
+stringing_control:
+  # Plated copper already runs hot; only mild cool bias so first-layer rows still fuse
+  nozzle_bias_c: -1
+  travel_speed_mm_s: 250
+  wipe: true
+  pressure_advance: 0.030
+  pressure_advance_smooth_time: 0.03
+  # After long non-print (soak), tip may drool once hot — start macro must wipe/retract after prime
+  post_prime_retract_mm: 0.8
 anneal:
   temp_c: 110
   hold_min: 60
-  cool_rate: "oven_off_natural"
-  # Seeds: oversize CAD before anneal (learned later by cal campaign)
+  cool_rate: oven_off_natural
   xy_scale: 1.025
   z_scale: 0.980
   hole_extra_mm: 0.10
+surface:
+  preferred: whambam_pex
+  glue: false
+  clean: ipa
 part_class_defaults:
   jig: balanced
   drill_guide: max_accuracy
@@ -43,6 +87,8 @@ part_class_defaults:
   sacrificial_fixture: max_speed_feasible
   bulk_spacer: max_speed_feasible
 notes:
-  - Higher nozzle temps improve interlayer fusion vs commodity PLA.
-  - Anneal increases heat resistance; always re-measure critical dims post-anneal.
-  - Dry filament before precision fixtures.
+  - "Shop-preferred filament — optimize here before other brands."
+  - "Higher nozzle temps improve interlayer fusion vs commodity PLA."
+  - "Anneal increases heat resistance; re-measure critical dims post-anneal."
+  - "Dry if basement RH is high; moisture is the main stringing amplifier."
+  - "On Wham Bam PEX: clean sheet, 65 C bed, Z squish is everything for first layer."

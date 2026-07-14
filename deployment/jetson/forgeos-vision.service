@@ -1,0 +1,16 @@
+[Unit]
+Description=ForgeOS Vision Brain (Jetson → Moonraker)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jetson
+WorkingDirectory=/home/jetson/forgeos-n4pro
+Environment=PYTHONPATH=/home/jetson/forgeos-n4pro
+ExecStart=/usr/bin/python3 -m forgeos.vision.service --moonraker http://192.168.1.178:7125 --interval 5
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

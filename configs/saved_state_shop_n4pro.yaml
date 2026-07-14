@@ -1,0 +1,84 @@
+# ForgeOS saved shop state — restore after reboot / new session
+# Snapshot: Phase 1 acceptance bar in progress (G3)
+# Date: 2026-07-14
+
+version: 1
+name: shop_n4pro_pex_brozzl_htpla
+description: >
+  Working first-layer baseline after Z-tune on Wham Bam PEX.
+  Z raised from scrape/empty, then set to operator "good enough" ~0.90 mm.
+  Purge macro active. Flat first-layer gcode (wide lines, flow 114%).
+
+printer:
+  host: "192.168.1.178"
+  hostname: "znp-k1"
+  ssh: "mks@192.168.1.178"
+  moonraker: "http://192.168.1.178:7125"
+  mainsail: "http://192.168.1.178:81/"
+  user: mks
+
+hardware:
+  surface: whambam_pex
+  nozzle:
+    brand: Brozzl
+    type: plated_copper
+    diameter_mm: 0.4
+    product_url: "https://www.brozzl.com/products/plated-copper-nozzles/"
+    forge_token: brozzl_plated_copper
+  filament:
+    brand: Protopasta
+    sku: protopasta_htpla
+    abrasive: false
+
+process:
+  z_adjust_mm: 0.90          # LIVE GOOD ENOUGH — do not reset to 0.08/1.08 without re-tune
+  bed_c: 65.0
+  nozzle_c: 214.0
+  soak_min: 5.0
+  ambient_c: 14.0
+  ambient_rh: 65.0
+  enclosure: open
+  draft: 0.3
+  pressure_advance: 0.030
+  pressure_advance_smooth_time: 0.03
+  retract_mm: 1.20
+  retract_speed_mm_s: 40
+  wipe_mm: 1.4
+  z_hop_mm: 0.25
+  first_layer:
+    height_mm: 0.28
+    line_width_mm: 0.58
+    flow: 1.14
+    speed_mm_s: 14.2
+    fan_percent: 0
+    spacing_ratio: 0.84
+  purge: true                # FORGE_PURGE in PRINT_START_ENV
+
+files:
+  z_tune_gcode: forgeos_z_tune_square.gcode
+  g3_bar_gcode: forgeos_g3_htpla_100mm_bar_v2.gcode
+  measure_card: artifacts/PHASE1_ACCEPTANCE_MEASURE.md
+  bom_vision: docs/BOM_GOD_TIER_VISION_RIG.md
+  stack_doc: docs/STACK_PEX_BROZZL_PROTOPASTA.md
+
+active_job_at_save:
+  filename: forgeos_g3_htpla_100mm_bar_v2.gcode
+  phase: acceptance_g3_bar
+  note: "Started after z-tune approved good enough; measure 100mm X when cool"
+
+restore_gcode: |
+  FORGE_SET_SURFACE TYPE=pex NAME="WhamBam PEX"
+  FORGE_SET_NOZZLE TYPE=brozzl_plated_copper DIA=0.4
+  FORGE_SET_MATERIAL SKU=protopasta_htpla
+  FORGE_SET_Z_ADJUST Z=0.90
+  FORGE_APPLY_ENV_TARGETS BED=65 NOZ=214 SOAK=5
+  FORGE_SET_RETRACT LENGTH=1.20 SPEED=40 WIPE=1.4 ZHOP=0.25
+  FORGE_SET_PA PA=0.030 SMOOTH=0.03
+  FORGE_PREFLIGHT
+  FORGE_Z_STATUS
+
+notes:
+  - "Z history: -0.10 empty/scrape → +0.08 ribs → +1.08 float trial → settle ~0.90 good enough"
+  - "Deep ribs: increased line width/flow; purge added for tip prime"
+  - "omniforge-runtime stopped during coupons (shaper spam)"
+  - "Next after bar cools: caliper 100mm X, log T0 cycle time, G3 pass if |err|<=0.20mm"

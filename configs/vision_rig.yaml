@@ -1,0 +1,76 @@
+# ForgeOS multi-view vision rig (Jetson-side config)
+# Device paths are examples — run `v4l2-ls` / `ls /dev/video*` on Jetson to fill in.
+
+printer:
+  moonraker_url: "http://192.168.1.178:7125"
+  # optional websocket: ws://192.168.1.178:7125/websocket
+  name: "neptune4pro-znp-k1"
+
+jetson:
+  host_role: "vision_brain"
+  data_dir: "/data/forgeos/vision"
+  ring_buffer_seconds: 5
+
+cameras:
+  cam_chamber:
+    enabled: true
+    device: "/dev/video0"
+    role: chamber
+    width: 1280
+    height: 720
+    fps: 10
+    notes: "Wide view of full bed — spaghetti / shift / presence"
+
+  cam_nozzle:
+    enabled: true
+    device: "/dev/video2"
+    role: nozzle
+    width: 640
+    height: 480
+    fps: 15
+    notes: "Toolhead nozzle cam — first layer + ooze whisker"
+
+  cam_oblique:
+    enabled: true
+    device: "/dev/video4"
+    role: oblique
+    width: 1280
+    height: 720
+    fps: 8
+    notes: "35 degree first-layer sheet — ribs / lift / squish"
+
+thermal:
+  ir_bed:
+    enabled: false  # enable when hardware attached
+    type: mlx90640   # or lepton
+    device: "i2c-1"
+    fps: 2
+    notes: "Bed heat map — dual zone soak / dissipation"
+
+  ir_hotend:
+    enabled: false
+    type: mlx90640
+    fps: 1
+
+modes:
+  FIRST_LAYER:
+    cameras: [cam_nozzle, cam_oblique, cam_chamber]
+    thermal: [ir_bed]
+    score: first_layer
+  HEAT_SOAK:
+    cameras: [cam_chamber]
+    thermal: [ir_bed]
+    score: thermal_map
+  LAYER_AUDIT:
+    cameras: [cam_chamber]
+    every_n_layers: 5
+  FAULT_BURST:
+    cameras: [cam_chamber, cam_nozzle, cam_oblique]
+    thermal: [ir_bed]
+
+policy:
+  auto_apply: false          # true only when vision-armed
+  max_baby_step_mm: 0.02
+  max_total_z_adjust_mm: 0.15
+  pause_on_spaghetti: true
+  suggest_only_default: true

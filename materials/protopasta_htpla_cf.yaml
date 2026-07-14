@@ -1,39 +1,59 @@
 sku: protopasta_htpla_cf
 name: "Protopasta HTPLA-CF"
 family: htpla_cf
-version: 1
+version: 2
 abrasive: true
+hardware_profile: stack_pex_hardened_htplacf
 nozzle:
   required_type: hardened
   min_diameter_mm: 0.5
   preferred_diameter_mm: 0.6
+  # Brozzl Ni-Cu is NOT suitable for continuous CF — preflight must fail soft nozzles
+  forbidden_hardware: [brozzl_nickel_copper_n4pro, brass]
 density_g_cm3: 1.30
 temps:
   nozzle_c: [210, 230]
   nozzle_default_c: 220
-  bed_c: [50, 65]
-  bed_default_c: 60
+  bed_c: [60, 70]
+  bed_default_c: 65
 max_volumetric_flow_mm3_s: 8.0
-pressure_advance_seed: 0.028
+pressure_advance_seed: 0.026
 flow_multiplier_seed: 0.98
 role_speeds_mm_s:
-  first_layer: 25
-  outer_wall: 50
-  inner_wall: 90
-  infill: 140
-  travel: 280
+  first_layer: 16
+  outer_wall: 45
+  inner_wall: 85
+  infill: 130
+  travel: 220
 role_accel_mm_s2:
-  outer_wall: 2500
-  inner_wall: 4000
-  infill: 5500
-  travel: 7000
+  outer_wall: 2200
+  inner_wall: 3800
+  infill: 5000
+  travel: 6500
+first_layer:
+  height_mm: 0.28
+  line_width_mm: 0.55
+  speed_mm_s: 16
+  flow: 1.05
+  fan_percent: 0
+  brim: true
+  bed_c: 65
+  nozzle_c: 220
+retract:
+  length_mm: 0.8
+  speed_mm_s: 30
+  z_hop_mm: 0.2
 anneal:
   temp_c: 110
   hold_min: 60
-  cool_rate: "oven_off_natural"
+  cool_rate: oven_off_natural
   xy_scale: 1.015
   z_scale: 0.990
   hole_extra_mm: 0.08
+surface:
+  preferred: whambam_pex
+  glue: false
+  clean: ipa
 part_class_defaults:
   jig: balanced
   drill_guide: max_accuracy
@@ -42,7 +62,7 @@ part_class_defaults:
   sacrificial_fixture: max_speed_feasible
   bulk_spacer: max_speed_feasible
 notes:
-  - HARDENED nozzle mandatory. Soft brass is a hard preflight FAIL.
-  - Prefer >=0.5 mm nozzle; 0.4 clogs frequently with metal/CF composites.
-  - Lower volumetric flow than pure HTPLA; speed comes from motion, not over-extrusion.
-  - Minimize filament path bends; abrasive wear accelerates at sharp PTFE elbows.
+  - Abrasive CF: HARDENED nozzle only. Brozzl Ni-Cu will wear rapidly.
+  - Prefer >=0.5–0.6 mm orifice; 0.4 clogs with CF more often.
+  - Lower volumetric flow; win speed with motion not over-extrusion.
+  - PEX still works; watch surface for CF grit — clean often.

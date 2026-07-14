@@ -1,0 +1,45 @@
+# Brozzl Plated Copper Nozzle — product line:
+# https://www.brozzl.com/products/plated-copper-nozzles/
+#
+# Copper core = excellent thermal conductivity (stable melt, high effective heat transfer).
+# Plating = improved surface durability / reduced stickiness vs bare copper; still NOT a
+# hardened abrasive nozzle. Soft core wears with CF/glass/glow/metal fills.
+#
+# Shop unit: 0.4 mm for Elegoo Neptune 4 Pro.
+
+sku: brozzl_plated_copper_0.4
+name: "Brozzl Plated Copper 0.4 mm (N4 Pro)"
+version: 2
+product_url: "https://www.brozzl.com/products/plated-copper-nozzles/"
+family: plated_copper
+abrasive_rated: false
+notes_research:
+  - "Brozzl Plated Copper: copper heat conduction + protective plating (official product line)."
+  - "Higher thermal conductivity than brass → melt liquefies more readily at the same set-temp."
+  - "Stringing/ooze risk if temps stay at old brass defaults; bias nozzle slightly cooler for HTPLA."
+  - "Coating helps abrasion vs bare copper but is NOT a substitute for hardened steel/ruby with CF."
+  - "N4 Pro geared extruder + 0.4 mm: good detail; watch volumetric ceiling with HTPLA."
+nozzle:
+  material: plated_copper
+  core: copper
+  coating: plated  # vendor plating (wear/release); treat as soft for CF policy
+  diameter_mm: 0.4
+  thermal_conductivity: very_high
+  wear: soft_plated
+  # Vendor markets high temp capability for copper-plated class; stay conservative under 300 for N4 Pro hotend limits
+  max_temp_c: 300
+  recommended_for: [protopasta_htpla, protopasta_standard_pla]
+  not_recommended_for: [protopasta_htpla_cf, continuous_abrasive]
+process_bias:
+  # Copper tip: more heat into filament → slightly cooler set-point reduces hang/string
+  nozzle_temp_offset_c: -3
+  # PA often needs a hair more tip pressure control when melt is runnier
+  pressure_advance_scale: 1.05
+  max_volumetric_flow_scale: 1.08
+  first_layer_speed_scale: 0.95
+  # Retract: copper melt zone stays hotter longer → slightly longer retract helps whiskers
+  retract_length_scale: 1.05
+  retract_speed_scale: 1.0
+preflight:
+  abrasive_ok: false
+  type_token: brozzl_plated_copper

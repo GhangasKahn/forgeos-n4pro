@@ -1,0 +1,39 @@
+sku: whambam_pex
+name: "Wham Bam PEX flexible build surface"
+version: 1
+family: pex_powder_coat
+notes_research:
+  - PEX/powder-coat style sheets stick best when CLEAN and at recommended bed temps.
+  - PLA / HTPLA family: typically strong adhesion around mid-60s C; too cool → lift; too hot → hard release / surface stress.
+  - Prefer bare clean sheet; glue stick usually unnecessary and can reduce release consistency.
+  - Flex-plate removal after cool-down is part of the process — do not pry hot.
+  - Cold basement: longer dual-bed soak so sheet + plate equalize before first layer.
+  - IPA clean; avoid harsh solvents that attack coating; no acetone on PEX.
+surface:
+  type: pex
+  flex_plate: true
+  glue_preferred: false
+  clean_with: [ipa, mild_soap_water]
+  avoid: [acetone, aggressive_scraping_hot]
+temps_c:
+  # Build-plate targets for Protopasta HTPLA on PEX (operator/ambient may nudge ±3)
+  htpla_bed: 65
+  htpla_bed_range: [60, 70]
+  pla_bed: 60
+  pla_bed_range: [55, 65]
+  release_below: 40
+process_bias:
+  first_layer_speed_mm_s: 18
+  first_layer_height_mm: 0.28
+  first_layer_flow: 1.06
+  brim_default: true
+  fan_layer_start: 3
+  bed_soak_extra_min_cold: 2.0
+  # Slightly higher bed than bare glass defaults in cold shops
+  bed_temp_offset_c: 0
+cool_down:
+  style: staged_to_release
+  hold_warm_c: 45
+  hold_min: 1
+  then_off: true
+  flex_remove_below_c: 40

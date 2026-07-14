@@ -57,6 +57,21 @@ Fast-and-wrong never promotes.
 - ADXL or Beacon/Eddy
 - Dryer + calipers + anneal oven
 
+## Shop stack (your hardware)
+
+Optimized for:
+
+- **Wham Bam PEX** flex sheet  
+- **[Brozzl Plated Copper 0.4 mm](https://www.brozzl.com/products/plated-copper-nozzles/)** (high conductivity; soft — not for CF)  
+- **Protopasta HTPLA** (primary filament)
+
+```bash
+python3 scripts/print_stack_profile.py
+python3 scripts/generate_g3_bar_gcode.py --use-stack --mode ztune -o artifacts/gcodes/forgeos_z_tune_square.gcode
+```
+
+See [docs/STACK_PEX_BROZZL_PROTOPASTA.md](docs/STACK_PEX_BROZZL_PROTOPASTA.md).
+
 ## Moisture (no dryer sensor)
 
 Soft-sensor from hotend **temp droop + heater power** under extrusion → risk score → safe flow/temp/speed response.  
@@ -72,6 +87,30 @@ python3 scripts/env_plan.py --profile environments/basement_default.yaml
 ```
 
 See [docs/environment_homeostasis.md](docs/environment_homeostasis.md).
+
+## Vision + Jetson ML (auto-cal path)
+
+Multi-view RGB + IR on **NVIDIA Jetson**; printer stays motion/safety-only.
+
+- Architecture & shopping list: [docs/VISION_ML_JETSON_STACK.md](docs/VISION_ML_JETSON_STACK.md)
+- Rig config: [configs/vision_rig.yaml](configs/vision_rig.yaml)
+- Jetson service stub: `python3 -m forgeos.vision.service --moonraker http://192.168.1.178:7125`
+
+**Cameras (v1):** chamber + nozzle + oblique RGB; **IR** bed map; **no LiDAR** (probe does Z better on this machine).
+
+**Full shopping list / SKU BOM (from zero → god-tier):** [docs/BOM_GOD_TIER_VISION_RIG.md](docs/BOM_GOD_TIER_VISION_RIG.md)
+
+**Restore shop process state after reboot:**
+```bash
+python3 scripts/restore_saved_state.py
+# state file: configs/saved_state_shop_n4pro.yaml  (Z=0.90, PEX, Brozzl, HTPLA, 65/214)
+```
+
+## Testing sheet
+
+Operator runbook with **duration**, **exact procedure**, and **metrics to capture** per test/gate:
+
+→ [docs/TESTING_SHEET.md](docs/TESTING_SHEET.md)
 
 ## Status
 
