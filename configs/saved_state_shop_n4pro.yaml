@@ -2,7 +2,7 @@
 # Snapshot: Phase 1 acceptance bar in progress (G3)
 # Date: 2026-07-14
 
-version: 1
+version: 2  # Phase 2 precision lock
 name: shop_n4pro_pex_brozzl_htpla
 description: >
   Working first-layer baseline after Z-tune on Wham Bam PEX.
