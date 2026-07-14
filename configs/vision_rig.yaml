@@ -6,6 +6,15 @@ printer:
   # optional websocket: ws://192.168.1.178:7125/websocket
   name: "neptune4pro-znp-k1"
 
+# Temporary eyes: Nothing Phone 4a Pro (or any Android) via IP Webcam app
+# Set url after Start server, e.g. http://192.168.1.42:8080
+phone_camera:
+  enabled: true
+  url: ""   # fill in: http://PHONE_LAN_IP:8080
+  role: oblique_or_chamber  # mount phone looking at bed / first layer
+  snapshot_path: "/shot.jpg"
+  notes: "IP Webcam app → Start server → same Wi-Fi as Mac"
+
 jetson:
   host_role: "vision_brain"
   data_dir: "/data/forgeos/vision"

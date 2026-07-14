@@ -41,6 +41,11 @@ def main() -> int:
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--max-ticks", type=int, default=None)
     ap.add_argument(
+        "--phone-url",
+        default=None,
+        help="Android IP Webcam base URL, e.g. http://192.168.1.42:8080 (Nothing Phone eyes)",
+    )
+    ap.add_argument(
         "--config",
         type=Path,
         default=ROOT / "configs" / "vision_rig.yaml",
@@ -64,6 +69,36 @@ def main() -> int:
     )
     log = logging.getLogger("forgeos.vision.service")
     bus = MoonrakerBus(args.moonraker)
+
+    vision_fn = None
+    phone_url = args.phone_url
+    # config override
+    if not phone_url and args.config.exists():
+        try:
+            import yaml
+
+            cfg = yaml.safe_load(args.config.read_text(encoding="utf-8")) or {}
+            phone_url = (cfg.get("phone_camera") or {}).get("url") or phone_url
+        except Exception:  # noqa: BLE001
+            pass
+    if phone_url:
+        from forgeos.vision.phone_camera import PhoneCameraSource
+
+        cam = PhoneCameraSource(
+            phone_url,
+            save_dir=str(ROOT / "artifacts" / "phone_cam"),
+        )
+        ping = cam.ping()
+        log.info("phone camera ping: %s", ping)
+        if not ping.get("ok"):
+            log.warning(
+                "Phone not reachable yet — will retry each tick. "
+                "Start IP Webcam on the phone. url=%s err=%s",
+                phone_url,
+                ping.get("error"),
+            )
+        vision_fn = cam
+
     loop = RealtimeVisionLoop(
         bus,
         interval_s=args.interval,
@@ -71,14 +106,14 @@ def main() -> int:
         state_path=args.state,
         journal_path=args.journal,
         config_path=args.config if args.config.exists() else None,
-        vision_feature_fn=None,  # wire capture.py frames here when cameras exist
+        vision_feature_fn=vision_fn,
     )
     log.info(
-        "dynamic RT service moonraker=%s interval=%.3f armed=%s config=%s",
+        "dynamic RT service moonraker=%s interval=%.3f armed=%s phone=%s",
         args.moonraker,
         args.interval,
         args.arm,
-        args.config,
+        phone_url or "none",
     )
     loop.run(once=args.once, max_ticks=args.max_ticks)
     return 0
