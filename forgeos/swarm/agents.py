@@ -226,15 +226,20 @@ class AdbAgent(BaseAgent):
     def tick(self) -> None:
         if not self.phone:
             return
-        connected = self.phone.is_connected()
-        if connected and self.stats_tick():
-            path = OUT / "screen.png"
+        if not self.phone.is_connected():
+            self.emit("film.adb.status", {"connected": False})
+            return
+        # re-assert never-sleep every tick cycle (~5s)
+        try:
+            self.phone.never_sleep()
+        except Exception as exc:  # noqa: BLE001
+            self.emit("film.adb.fail", {"error": str(exc), "op": "never_sleep"})
+        path = OUT / "screen.png"
+        try:
             self.phone.screencap(path)
             self.emit("film.adb.screencap", {"ok": path.exists(), "path": str(path)})
-
-    def stats_tick(self) -> bool:
-        # screencap every ~ other tick handled by interval
-        return True
+        except Exception as exc:  # noqa: BLE001
+            self.emit("film.adb.fail", {"error": str(exc), "op": "screencap"})
 
 
 class PrinterSenseAgent(BaseAgent):

@@ -118,13 +118,50 @@ class AdbPhone:
 
     def keep_awake(self, on: bool = True) -> bool:
         # stay on while plugged/wireless debug; also svc power
-        mode = "true" if on else "false"
-        c1, _, _ = self.shell("settings", "put", "global", "stay_on_while_plugged_in", "7" if on else "0")
+        c1, _, _ = self.shell(
+            "settings",
+            "put",
+            "global",
+            "stay_on_while_plugged_in",
+            "7" if on else "0",
+        )
         c2, _, _ = self.shell("svc", "power", "stayon", "true" if on else "false")
         return c1 == 0 or c2 == 0
 
+    def never_sleep(self) -> dict:
+        """Hard lock: screen never times out / device never sleeps (ADB session).
+
+        - screen_off_timeout → max int (~24 days, effectively never for a session)
+        - stay_on_while_plugged_in → USB+AC+wireless (7)
+        - svc power stayon true
+        - disable deviceidle/doze best-effort
+        - wake + dismiss keyguard
+        """
+        res = {}
+        # ~ max signed 32-bit ms
+        code, out, err = self.shell(
+            "settings", "put", "system", "screen_off_timeout", "2147483647"
+        )
+        res["screen_off_timeout"] = code == 0
+        code, _, _ = self.shell(
+            "settings", "put", "secure", "sleep_timeout", "2147483647"
+        )
+        res["sleep_timeout"] = code == 0
+        res["stay_on_plugged"] = self.keep_awake(True)
+        res["screen_on"] = self.screen_on()
+        res["brightness"] = self.brightness(230)
+        # reduce battery saver fighting stay-on
+        self.shell("settings", "put", "global", "adaptive_battery_management_enabled", "0")
+        self.shell("settings", "put", "global", "app_auto_restriction_enabled", "0")
+        c, _, _ = self.shell("dumpsys", "deviceidle", "disable")
+        res["deviceidle_disable"] = c == 0
+        # mark USB so stay_on_while_plugged thinks we're powered (wireless debug often is)
+        self.shell("dumpsys", "battery", "set", "usb", "1")
+        res["battery_usb_flag"] = True
+        log.info("never_sleep applied: %s", res)
+        return res
+
     def screen_on(self) -> bool:
-        code, out, _ = self.shell("dumpsys", "power")
         # wake
         self.shell("input", "keyevent", "KEYCODE_WAKEUP")
         self.shell("wm", "dismiss-keyguard")
@@ -132,6 +169,8 @@ class AdbPhone:
 
     def brightness(self, value: int = 200) -> bool:
         value = max(1, min(255, int(value)))
+        # manual brightness mode
+        self.shell("settings", "put", "system", "screen_brightness_mode", "0")
         c, _, _ = self.shell("settings", "put", "system", "screen_brightness", str(value))
         return c == 0
 
@@ -210,9 +249,10 @@ class AdbPhone:
     def optimize_for_film(self) -> dict:
         """Camera/film oriented ADB side (screen + power)."""
         res = {}
-        res["screen_on"] = self.screen_on()
-        res["keep_awake"] = self.keep_awake(True)
-        res["brightness"] = self.brightness(220)
+        res["never_sleep"] = self.never_sleep()
+        res["screen_on"] = True
+        res["keep_awake"] = True
+        res["brightness"] = self.brightness(230)
         # disable animations for snappier UI (optional)
         self.shell("settings", "put", "global", "window_animation_scale", "0.5")
         self.shell("settings", "put", "global", "transition_animation_scale", "0.5")

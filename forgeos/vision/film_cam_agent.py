@@ -145,6 +145,8 @@ class FilmCamAgent:
             try:
                 r = self.adb.optimize_for_film()
                 log.info("ADB film optimize: %s", r)
+                ns = self.adb.never_sleep()
+                log.info("ADB never_sleep: %s", ns)
             except Exception as exc:  # noqa: BLE001
                 log.warning("ADB optimize failed: %s", exc)
         # HTTP camera side
@@ -211,13 +213,19 @@ class FilmCamAgent:
 
     def tick(self) -> None:
         self.stats.ticks += 1
-        # occasional ADB screencap for true phone HUD
-        if self.adb and self.adb.is_connected() and self.stats.ticks % 8 == 1:
-            try:
-                self.adb.screencap(self.out_dir / "screen.png")
-                self.stats.adb_ok = True
-            except Exception as exc:  # noqa: BLE001
-                log.debug("screencap: %s", exc)
+        # ADB keep-awake + occasional screencap for true phone HUD
+        if self.adb and self.adb.is_connected():
+            self.stats.adb_ok = True
+            if self.stats.ticks % 10 == 1:
+                try:
+                    self.adb.never_sleep()
+                except Exception as exc:  # noqa: BLE001
+                    log.debug("never_sleep: %s", exc)
+            if self.stats.ticks % 8 == 1:
+                try:
+                    self.adb.screencap(self.out_dir / "screen.png")
+                except Exception as exc:  # noqa: BLE001
+                    log.debug("screencap: %s", exc)
 
         try:
             fr = grab_phone_frame(
