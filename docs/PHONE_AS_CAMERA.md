@@ -38,7 +38,25 @@ If it fails:
 pip install pillow   # recommended on Mac for real row/flat scores
 ```
 
-## 3. Run vision with phone eyes
+## 3. IP Cam Agent (camera only — recommended always-on)
+
+Sole operator/monitor for the phone stream. **Does not control the printer.**
+
+```bash
+# monitor + snapshots + periodic autofocus
+python3 -m forgeos.vision.ipcam_agent --url http://192.168.1.250:8080 -v
+
+# auto torch if scene is dark
+python3 -m forgeos.vision.ipcam_agent --url http://192.168.1.250:8080 --torch-auto -v
+```
+
+Writes:
+- `artifacts/ipcam_agent/latest.jpg` — newest frame  
+- `artifacts/ipcam_agent/status.json` — live health  
+- `artifacts/ipcam_agent/journal.jsonl` — history  
+- `snap_YYYYMMDD_HHMMSS.jpg` — periodic archives  
+
+## 4. Run full vision+printer loop (optional)
 
 ```bash
 python3 -m forgeos.vision.service \
