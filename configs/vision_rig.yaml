@@ -69,8 +69,36 @@ modes:
     thermal: [ir_bed]
 
 policy:
-  auto_apply: false          # true only when vision-armed
+  auto_apply: false          # true only when vision-armed / --arm
   max_baby_step_mm: 0.02
   max_total_z_adjust_mm: 0.15
   pause_on_spaghetti: true
   suggest_only_default: true
+
+# Fully dynamic real-time control loop (hot-reloaded by service)
+realtime:
+  enabled: true
+  interval_s: 0.25           # 4 Hz control tick (raise to 0.1 for 10 Hz)
+  alpha: 0.30                # EMA reactivity (higher = more real-time)
+  min_apply_interval_s: 1.5  # rate-limit physical actuators
+  journal: true
+  sources:
+    telemetry: true          # Moonraker objects — always on
+    cameras: true            # when capture wired
+    thermal: true
+  control:
+    flat_surface_mode: true  # FORGE_FLAT_SURFACE_MODE each layer window
+    z_babystep: true
+    flow_m221: true          # volume balance nudges (NOT ironing)
+    speed_m220: true         # thermal lag / recover
+    pressure_advance: false  # enable after PA model online
+  objectives:
+    flatness: 0.35
+    adhesion_z: 0.25
+    thermal: 0.20
+    speed: 0.20
+  zero_ironing: true
+  machine_flat_geometry:
+    line_w_mm: 0.44
+    spacing_ratio: 1.00
+    flow: 1.00

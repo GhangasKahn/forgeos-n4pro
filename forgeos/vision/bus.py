@@ -49,6 +49,22 @@ class MoonrakerBus:
     def baby_up(self) -> Dict[str, Any]:
         return self.gcode("FORGE_BABY_UP")
 
+    def apply_dynamic(self, script: str) -> Dict[str, Any]:
+        """Apply a real-time controller script (single or multi-line)."""
+        return self.gcode(script)
+
+    def set_flow_percent(self, percent: int) -> Dict[str, Any]:
+        return self.gcode("M221 S%d" % int(percent))
+
+    def set_speed_percent(self, percent: int) -> Dict[str, Any]:
+        return self.gcode("M220 S%d" % int(percent))
+
+    def flat_mode(self, role: str = "solid") -> Dict[str, Any]:
+        return self.gcode("FORGE_FLAT_SURFACE_MODE ROLE=%s" % role)
+
+    def set_z_adjust(self, z_mm: float) -> Dict[str, Any]:
+        return self.gcode("FORGE_SET_Z_ADJUST Z=%.3f" % float(z_mm))
+
     def is_printing(self) -> bool:
         try:
             st = self.objects_query(["print_stats"])

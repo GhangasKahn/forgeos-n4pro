@@ -1,72 +1,86 @@
 #!/usr/bin/env python3
-"""ForgeOS vision service entry (runs on Jetson).
+"""ForgeOS real-time dynamic vision/ML service.
 
-V0: connect to Moonraker, poll status, emit placeholder first-layer events.
-Cameras/IR attach in capture.py later.
+Fully dynamic every tick:
+  - Moonraker telemetry features
+  - Optional camera / placeholder vision scorer
+  - Adaptive EMA state
+  - Multi-objective controller (flat / Z / flow / speed / thermal)
+  - Hot-reload of vision_rig.yaml
+  - JSONL journal for online learning
+
+Default is suggest-only; --arm applies within envelopes.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import logging
-import time
+import sys
 from pathlib import Path
 
+# allow `python3 -m forgeos.vision.service` from repo root
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from forgeos.vision.bus import MoonrakerBus
-from forgeos.vision.calib.fsm import VisionCalibFSM
-from forgeos.vision.scorers.first_layer import score_from_gray_rows
+from forgeos.vision.realtime_loop import RealtimeVisionLoop
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(description="ForgeOS real-time dynamic ML/vision loop")
     ap.add_argument("--moonraker", default="http://192.168.1.178:7125")
-    ap.add_argument("--interval", type=float, default=5.0)
-    ap.add_argument("--arm", action="store_true", help="allow auto babystep suggestions to apply")
+    ap.add_argument(
+        "--interval",
+        type=float,
+        default=0.25,
+        help="control tick seconds (real-time default 0.25s)",
+    )
+    ap.add_argument("--arm", action="store_true", help="auto-apply actions within envelopes")
     ap.add_argument("--once", action="store_true")
+    ap.add_argument("--max-ticks", type=int, default=None)
+    ap.add_argument(
+        "--config",
+        type=Path,
+        default=ROOT / "configs" / "vision_rig.yaml",
+    )
+    ap.add_argument(
+        "--state",
+        type=Path,
+        default=ROOT / "artifacts" / "vision_adaptive_state.json",
+    )
+    ap.add_argument(
+        "--journal",
+        type=Path,
+        default=ROOT / "artifacts" / "vision_rt_journal.jsonl",
+    )
+    ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args()
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    log = logging.getLogger("forgeos.vision")
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
+    log = logging.getLogger("forgeos.vision.service")
     bus = MoonrakerBus(args.moonraker)
-    fsm = VisionCalibFSM(armed=args.arm)
-
-    log.info("vision service start moonraker=%s armed=%s", args.moonraker, args.arm)
-
-    while True:
-        try:
-            info = bus.printer_info()
-            status = bus.objects_query(
-                ["print_stats", "extruder", "heater_bed", "toolhead", "gcode_move"]
-            )
-            printing = str(status.get("print_stats", {}).get("state", "")).lower() == "printing"
-            z = (status.get("gcode_move", {}) or {}).get("homing_origin", [0, 0, 0])[2]
-            log.info(
-                "printer=%s print=%s z=%.3f noz=%.1f",
-                info.get("state"),
-                status.get("print_stats", {}).get("state"),
-                float(z or 0),
-                float((status.get("extruder") or {}).get("temperature") or 0),
-            )
-
-            if printing and fsm.state.value in ("idle", "wait_first_layer", "adjust", "scoring"):
-                if fsm.state.value == "idle":
-                    fsm.arm() if args.arm else setattr(fsm, "state", fsm.state.WAIT_FIRST_LAYER)
-                # Placeholder features until real frames wired
-                # (replace with OpenCV row means from cam_oblique)
-                fake_rows = [120 + (i % 5) * 8 for i in range(40)]
-                result = score_from_gray_rows(fake_rows, coverage=0.75)
-                event = fsm.on_first_layer_result(result)
-                log.info("vision_event %s", json.dumps(event.as_dict()))
-                if args.arm and event.suggestion in ("FORGE_BABY_UP", "FORGE_BABY_DOWN"):
-                    log.warning("AUTO APPLY %s", event.suggestion)
-                    bus.gcode(event.suggestion)
-        except Exception as exc:
-            log.exception("loop error: %s", exc)
-
-        if args.once:
-            break
-        time.sleep(args.interval)
+    loop = RealtimeVisionLoop(
+        bus,
+        interval_s=args.interval,
+        armed=args.arm,
+        state_path=args.state,
+        journal_path=args.journal,
+        config_path=args.config if args.config.exists() else None,
+        vision_feature_fn=None,  # wire capture.py frames here when cameras exist
+    )
+    log.info(
+        "dynamic RT service moonraker=%s interval=%.3f armed=%s config=%s",
+        args.moonraker,
+        args.interval,
+        args.arm,
+        args.config,
+    )
+    loop.run(once=args.once, max_ticks=args.max_ticks)
     return 0
 
 
