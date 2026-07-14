@@ -7,4 +7,4 @@ RESUME THIS PROJECT
      cd ~/forgeos-n4pro && python3 scripts/restore_saved_state.py
 5. Printer: mks@192.168.1.178  (Mainsail :81)
 
-Locked: Z=0.90  bed=65  noz=214  PEX + Brozzl plated copper 0.4 + Protopasta HTPLA
+Locked: Z=-0.485  bed=65  noz=214  PEX + Brozzl plated copper 0.4 + Protopasta HTPLA

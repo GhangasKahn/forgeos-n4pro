@@ -1,7 +1,7 @@
 {
   "event": "save_state",
   "state_file": "configs/saved_state_shop_n4pro.yaml",
-  "z_adjust_mm": 0.9,
+  "z_adjust_mm": -0.485,
   "bed_c": 65,
   "nozzle_c": 214,
   "surface": "whambam_pex",
@@ -9,21 +9,9 @@
   "filament": "protopasta_htpla",
   "active_job": {
     "filename": "forgeos_g3_htpla_100mm_bar_v2.gcode",
-    "total_duration": 295.2887085992843,
-    "print_duration": 0.0,
-    "filament_used": 0.0,
     "state": "printing",
-    "message": "",
-    "info": {
-      "total_layer": null,
-      "current_layer": null
-    }
+    "note": "Z locked -0.485 mid G3 bar"
   },
-  "live_z": [
-    0.0,
-    0.0,
-    0.9,
-    0.0
-  ],
-  "ts": 1784021396.0458932
+  "live_z": [0.0, 0.0, -0.485, 0.0],
+  "ts_note": "2026-07-14 operator lock Z=-0.485"
 }

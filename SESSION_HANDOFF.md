@@ -70,7 +70,7 @@ That pulls safety, mesh, extrusion, moisture, macros, environment, firstlayer.
 
 | Param | Value |
 |---|---|
-| **Z adjust** | **+0.90 mm** (homing_origin Z) |
+| **Z adjust** | **−0.485 mm** (homing_origin Z, locked) |
 | Bed | **65 °C** dual zone |
 | Nozzle | **214 °C** |
 | Soak | **5 min** |
@@ -85,7 +85,7 @@ That pulls safety, mesh, extrusion, moisture, macros, environment, firstlayer.
 1. **−0.10** → empty bed / scrape (too low)  
 2. **+0.08** → plastic sticks but **deep ribs**  
 3. **+1.08** (+1 mm up) trial after fingernail-deep grooves  
-4. Settled operator **good enough ~0.90** → used for G3 bar  
+4. Settled trial ~0.90 then operator **locked Z=−0.485** for G3 bar  
 
 ---
 
@@ -97,7 +97,7 @@ That pulls safety, mesh, extrusion, moisture, macros, environment, firstlayer.
 | G1 hardware ready | PASS |
 | Dual-bed heat | PASS |
 | Mesh | PASS (~0.19 mm p2p earlier) |
-| Z-tune | Multiple runs; **good enough** at Z=0.90 |
+| Z-tune | Multiple runs; **locked** at Z=−0.485 |
 | **G3 100 mm bar** | **Started** `forgeos_g3_htpla_100mm_bar_v2.gcode` — measure when cool |
 | G4/G5 | Not yet |
 | Heartbeat monitor | Was running every 5 min in session |
@@ -152,7 +152,7 @@ cd ~/forgeos-n4pro && python3 scripts/restore_saved_state.py
 FORGE_Z_STATUS
 FORGE_BABY_UP / FORGE_BABY_DOWN
 FORGE_PURGE
-FORGE_SET_Z_ADJUST Z=0.90
+FORGE_SET_Z_ADJUST Z=-0.485
 FORGE_PRINT_START_ENV BED=65 EXTRUDER=214 SOAK=5
 ```
 
