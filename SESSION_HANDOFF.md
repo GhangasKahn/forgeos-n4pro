@@ -98,7 +98,7 @@ That pulls safety, mesh, extrusion, moisture, macros, environment, firstlayer.
 | Dual-bed heat | PASS |
 | Mesh | PASS (~0.19 mm p2p earlier) |
 | Z-tune | Multiple runs; **locked** at Z=−0.480 |
-| **G3 100 mm bar** | **Started** `forgeos_g3_htpla_100mm_bar_v2.gcode` — measure when cool |
+| **G3 100 mm bar** | **Complete** reprint @ Z=−0.480 · X=**99–100 mm** · **G3 provisional** · T0≈21.6 min |
 | G4/G5 | Not yet |
 | Heartbeat monitor | Was running every 5 min in session |
 
@@ -207,8 +207,8 @@ FORGE_PRINT_START_ENV BED=65 EXTRUDER=214 SOAK=5
 
 ## Next session priorities (suggested)
 
-1. Confirm G3 bar finished / measure 100 mm + T0  
-2. If G3 pass → optional G4 (3×) or production jig  
+1. Optional: remeasure X at 3 points → single mean (hard G3 if \|err\|≤0.20 mm)  
+2. If hard pass → G4 (3×) or production jig; if short → flow/PA/shrink nudge  
 3. Permanent `PROBE_CALIBRATE` / SAVE_CONFIG once Z is loved  
 4. Order Jetson + cams from BOM when ready  
 5. Disable or isolate legacy OmniForge services long-term  

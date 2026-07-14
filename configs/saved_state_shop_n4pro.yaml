@@ -63,8 +63,8 @@ files:
 
 active_job_at_save:
   filename: forgeos_g3_htpla_100mm_bar_v2.gcode
-  phase: acceptance_g3_bar
-  note: "Started after z-tune approved good enough; measure 100mm X when cool"
+  phase: g3_measured_provisional
+  note: "Reprint complete Z=-0.480; operator X=99-100mm → G3 provisional; T0≈21.6min"
 
 restore_gcode: |
   FORGE_SET_SURFACE TYPE=pex NAME="WhamBam PEX"
@@ -81,4 +81,5 @@ notes:
   - "Z history: -0.10 empty/scrape → +0.08 ribs → +1.08 float → ~0.90 trial → LOCKED -0.480 (in-print adjust)"
   - "Deep ribs: increased line width/flow; purge added for tip prime"
   - "omniforge-runtime stopped during coupons (shaper spam)"
-  - "Next after bar cools: caliper 100mm X, log T0 cycle time, G3 pass if |err|<=0.20mm"
+  - "G3 measure 2026-07-14: X=99-100mm (provisional); T0 print=21.6min wall=39.4min; Z=-0.480"
+  - "Next: remeasure X mean to 0.05mm if possible; G4×3 if hard pass; or flow/PA nudge if consistently short"

@@ -1,0 +1,22 @@
+{
+  "gate": "G3",
+  "sku": "forgeos_g3_htpla_100mm_bar_v2",
+  "nominal_x_mm": 100.0,
+  "measured_x_mm": {"min": 99.0, "max": 100.0, "operator_note": "99-100 mm"},
+  "error_mm": {"min": -1.0, "max": 0.0},
+  "g3_pass_criterion_mm": 0.20,
+  "g3_verdict": "provisional_borderline",
+  "g3_rationale": "Range spans fail (-1.0) to pass (0.0); need single mean remeasure",
+  "z_adjust_mm": -0.480,
+  "temps_c": {"bed": 65, "nozzle": 214},
+  "t0_print_duration_s": 1298.08,
+  "t0_print_duration_min": 21.63,
+  "wall_clock_total_s": 2361.98,
+  "filament_used_mm": 2330.98,
+  "stack": {
+    "surface": "whambam_pex",
+    "nozzle": "brozzl_plated_copper_0.4",
+    "filament": "protopasta_htpla"
+  },
+  "saved_at": "2026-07-14"
+}
