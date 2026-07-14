@@ -106,7 +106,7 @@ def _first_jpeg_from_mjpeg(url: str, timeout_s: float = 5.0) -> bytes:
 
 
 def _decode_gray_rows(jpeg: bytes, max_rows: int = 48) -> Tuple[List[float], int, int, float]:
-    """Decode JPEG to per-row mean luma. Prefers PIL, then cv2, then crude SOF size only."""
+    """Decode JPEG to per-row mean luma. Prefers PIL, then cv2, then macOS sips→BMP."""
     # --- PIL ---
     try:
         from PIL import Image
@@ -114,7 +114,6 @@ def _decode_gray_rows(jpeg: bytes, max_rows: int = 48) -> Tuple[List[float], int
 
         im = Image.open(io.BytesIO(jpeg)).convert("L")
         w, h = im.size
-        # downsample height to max_rows
         step = max(1, h // max_rows)
         px = im.load()
         rows: List[float] = []
@@ -153,11 +152,67 @@ def _decode_gray_rows(jpeg: bytes, max_rows: int = 48) -> Tuple[List[float], int
     except Exception as exc:  # noqa: BLE001
         log.debug("cv2 decode failed: %s", exc)
 
-    # --- last resort: no pixel decode — synthetic neutral rows (still proves link works)
+    # --- macOS sips → BMP (pure stdlib parse) ---
+    try:
+        return _decode_via_sips_bmp(jpeg, max_rows=max_rows)
+    except Exception as exc:  # noqa: BLE001
+        log.debug("sips decode failed: %s", exc)
+
     w, h = _jpeg_size(jpeg)
-    log.warning("No PIL/cv2 — phone linked but cannot score pixels. pip install pillow")
+    log.warning("Phone JPEG linked but no pixel decoder — scores degraded")
     rows = [128.0] * max_rows
     return rows, w, h, 0.5
+
+
+def _decode_via_sips_bmp(jpeg: bytes, max_rows: int = 48) -> Tuple[List[float], int, int, float]:
+    import os
+    import subprocess
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        jp = os.path.join(td, "in.jpg")
+        bp = os.path.join(td, "out.bmp")
+        with open(jp, "wb") as f:
+            f.write(jpeg)
+        subprocess.check_call(
+            ["sips", "-s", "format", "bmp", jp, "--out", bp],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        data = open(bp, "rb").read()
+    if data[:2] != b"BM":
+        raise RuntimeError("not BMP")
+    w = struct.unpack_from("<i", data, 18)[0]
+    h = struct.unpack_from("<i", data, 22)[0]
+    bpp = struct.unpack_from("<H", data, 28)[0]
+    off = struct.unpack_from("<I", data, 10)[0]
+    if bpp != 24 and bpp != 32:
+        raise RuntimeError("unsupported bpp %s" % bpp)
+    row_pad = (4 - ((abs(w) * (bpp // 8)) % 4)) % 4
+    abs_h = abs(h)
+    abs_w = abs(w)
+    step = max(1, abs_h // max_rows)
+    xstep = max(1, abs_w // 64)
+    rows: List[float] = []
+    bright = 0
+    total = 0
+    # BMP bottom-up if h>0
+    for yi in range(0, abs_h, step):
+        y = abs_h - 1 - yi if h > 0 else yi
+        s = 0.0
+        n = 0
+        for x in range(0, abs_w, xstep):
+            i = off + y * (abs_w * (bpp // 8) + row_pad) + x * (bpp // 8)
+            b, g, r = data[i], data[i + 1], data[i + 2]
+            v = 0.299 * r + 0.587 * g + 0.114 * b
+            s += v
+            n += 1
+            total += 1
+            if v > 40:
+                bright += 1
+        rows.append(s / max(1, n))
+    coverage = bright / max(1, total)
+    return rows, abs_w, abs_h, coverage
 
 
 def _jpeg_size(jpeg: bytes) -> Tuple[int, int]:
