@@ -34,13 +34,15 @@ def gen_bar(
     width: float = 12.0,
     height: float = 4.0,
     layer: float = 0.2,
-    line_w: float = 0.58,
+    line_w: float = 0.44,
     first_h: float = 0.28,
-    first_flow: float = 1.14,
-    first_spd_mm_s: float = 15.0,
-    spacing_ratio: float = 0.84,
+    first_flow: float = 1.00,
+    first_spd_mm_s: float = 12.0,
+    spacing_ratio: float = 1.00,
+    upper_line_w: float = 0.44,
+    upper_spacing_ratio: float = 1.00,
 ) -> str:
-    """100mm bar — fat overlapping first-layer rows so surface is flat, not ribbed."""
+    """100mm bar — god-tier flat sheet: lines side-by-side (spacing ≈ width), no pile-up."""
     x0 = (225.0 - length) / 2.0
     y0 = (225.0 - width) / 2.0
     x1 = x0 + length
@@ -56,18 +58,19 @@ def gen_bar(
 
     wall_spd = 50 * 60
     first_spd = int(first_spd_mm_s * 60)
-    infill_spd = 90 * 60
+    infill_spd = 80 * 60
     travel = int(profile.travel_speed_mm_s * 60)
     spacing = line_w * spacing_ratio
 
     L: list = []
     a = L.append
-    a("; ForgeOS G3 bar v5 — flat first layer (overlap) + wipe/retract")
+    a("; ForgeOS G3 bar v6 — GOD-TIER FLAT (side-by-side lines, no heavy overlap)")
     a("; TARGET_LENGTH_MM:%.3f  (CAD length; use --length to compensate shrink/short)" % length)
     a(
-        "; FL_W:%.2f FL_FLOW:%.2f FL_SPD:%.0f SPACING_RATIO:%.2f"
-        % (line_w, first_flow, first_spd_mm_s, spacing_ratio)
+        "; FL_W:%.2f FL_FLOW:%.2f FL_SPD:%.0f SPACING_RATIO:%.3f STEP:%.3fmm"
+        % (line_w, first_flow, first_spd_mm_s, spacing_ratio, spacing)
     )
+    a("; FLAT_RULE: spacing_ratio=1.0 → centers one line-width apart (kissing sides, not stacked)")
     a(
         "; RETRACT:%.2fmm @%.0fmm/s WIPE:%.2fmm ZHOP:%.2f PA:%.4f"
         % (
@@ -91,13 +94,13 @@ def gen_bar(
     a("FORGE_PURGE X=20 Y=100 LEN=40 E=5 Z=%.2f" % (first_h + 0.02))
     a("")
 
-    # Brim — slightly wider lines, less critical flatness
-    a("; brim")
+    # Brim — same side-by-side pitch as part (not piled)
+    a("; brim (side-by-side pitch)")
     a("G0 Z%.3f F600" % first_h)
     cx = cy = None
     last_dx, last_dy = 1.0, 0.0
     for bi in range(4, 0, -1):
-        inset = -bi * line_w
+        inset = -bi * spacing
         xa, ya, xb, yb = x0 + inset, y0 + inset, x1 - inset, y1 - inset
         if cx is None:
             a("G0 X%.3f Y%.3f F%d" % (xa, ya, travel))
@@ -123,8 +126,8 @@ def gen_bar(
     for li, z in enumerate(layers_z):
         lh = first_h if li == 0 else (z - layers_z[li - 1])
         flow = first_flow if li == 0 else 1.0
-        lw = line_w if li == 0 else 0.48
-        sp = spacing if li == 0 else 0.48 * 0.92
+        lw = line_w if li == 0 else upper_line_w
+        sp = spacing if li == 0 else (upper_line_w * upper_spacing_ratio)
         spd = first_spd if li == 0 else wall_spd
         isp = first_spd if li == 0 else infill_spd
         if li == 1:
@@ -132,7 +135,7 @@ def gen_bar(
         if li == 3:
             a("M106 S64")
         a("")
-        a(";LAYER:%d Z=%.3f lw=%.2f flow=%.2f" % (li, z, lw, flow))
+        a(";LAYER:%d Z=%.3f lw=%.2f flow=%.2f step=%.3f" % (li, z, lw, flow, sp))
 
         sx, sy = x0, y0
         for line in gcode_travel_unretract(sx, sy, z, profile, "layer start"):
@@ -140,9 +143,9 @@ def gen_bar(
         cx, cy = sx, sy
         last_dx, last_dy = 1.0, 0.0
 
-        # walls
+        # walls — pitch = line width (side by side shells)
         for peri in range(3):
-            inset = peri * lw * 0.92
+            inset = peri * sp
             xa, ya = x0 + inset, y0 + inset
             xb, yb = x1 - inset, y1 - inset
             if peri > 0:
@@ -160,8 +163,8 @@ def gen_bar(
                 last_dx, last_dy = nx - cx, ny - cy
                 cx, cy = nx, ny
 
-        # solid fill — tight spacing on L0 for flat sheet
-        inset = 3 * lw * 0.92
+        # solid fill — side-by-side rows (step = line width × spacing_ratio)
+        inset = 3 * sp
         xa, ya = x0 + inset, y0 + inset
         xb, yb = x1 - inset, y1 - inset
         y = ya
@@ -211,12 +214,12 @@ def gen_ztune(
     nozzle: float,
     soak: float,
     profile: RetractWipeProfile = HTPLA_BROZZL,
-    line_w: float = 0.58,
-    first_flow: float = 1.14,
-    first_spd_mm_s: float = 15.0,
-    spacing_ratio: float = 0.84,
+    line_w: float = 0.44,
+    first_flow: float = 1.00,
+    first_spd_mm_s: float = 12.0,
+    spacing_ratio: float = 1.00,
 ) -> str:
-    """Single-layer square optimized for flat fused rows on PEX."""
+    """Single-layer square — god-tier flat: side-by-side lines on PEX."""
     size = 40.0
     x0 = (225.0 - size) / 2.0
     y0 = (225.0 - size) / 2.0
@@ -226,9 +229,9 @@ def gen_ztune(
     spacing = line_w * spacing_ratio
     L = []
     a = L.append
-    a("; ForgeOS Z-TUNE v2 — flat sheet (wide lines + overlap + flow)")
-    a("; FL_W:%.2f FLOW:%.2f SPD:%.0f SPACING:%.2f" % (line_w, first_flow, first_spd_mm_s, spacing))
-    a("; If ribbed: still slightly high Z → BABY_DOWN 1 click; or need more flow (already high)")
+    a("; ForgeOS Z-TUNE v3 — GOD-TIER FLAT (side-by-side, spacing_ratio=1.0)")
+    a("; FL_W:%.2f FLOW:%.2f SPD:%.0f STEP:%.3f" % (line_w, first_flow, first_spd_mm_s, spacing))
+    a("; Want glass-flat sheet: lines kiss, not pile. Gaps → ratio 0.97 or flow 1.02; piles → ratio 1.0 / lower flow")
     a("FORGE_PRINT_START_ENV BED=%.2f EXTRUDER=%.2f SOAK=%.2f" % (bed, nozzle, soak))
     a("M83")
     a("G90")
@@ -245,9 +248,9 @@ def gen_ztune(
     last_dx, last_dy = 1.0, 0.0
     a("G0 X%.3f Y%.3f F9000" % (x0, y0))
 
-    # outer shells with fat width
+    # outer shells — side-by-side pitch
     for i in range(4):
-        inset = i * line_w * 0.9
+        inset = i * spacing
         xa, ya = x0 + inset, y0 + inset
         xb, yb = x1 - inset, y1 - inset
         if i > 0:
@@ -265,14 +268,14 @@ def gen_ztune(
             last_dx, last_dy = nx - cx, ny - cy
             cx, cy = nx, ny
 
-    # solid fill with overlap
-    y = y0 + 4 * line_w * 0.9
-    y_end = y1 - 4 * line_w * 0.9
+    # solid fill — side-by-side (step = line_w * spacing_ratio)
+    y = y0 + 4 * spacing
+    y_end = y1 - 4 * spacing
     direction = 1
     first = True
     while y <= y_end + 1e-6:
-        xa = x0 + 4 * line_w * 0.9
-        xb = x1 - 4 * line_w * 0.9
+        xa = x0 + 4 * spacing
+        xb = x1 - 4 * spacing
         if direction > 0:
             tx, ty, ex = xa, y, xb
         else:
@@ -304,7 +307,7 @@ def gen_ztune(
     a("M104 S0")
     a("SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0")
     a("SET_HEATER_TEMPERATURE HEATER=heater_bed_outer TARGET=0")
-    a('RESPOND MSG="Z-TUNE v2 done — want flat fused sheet, not ribs"')
+    a('RESPOND MSG="Z-TUNE v3 FLAT done — side-by-side sheet, not piled ribs"')
     a("M84")
     return "\n".join(L) + "\n"
 
@@ -322,24 +325,34 @@ def main() -> int:
         default=100.0,
         help="CAD bar length mm (e.g. 100.5 if last print measured ~99.5)",
     )
+    ap.add_argument("--line-w", type=float, default=0.44, help="first-layer line width mm")
+    ap.add_argument(
+        "--spacing-ratio",
+        type=float,
+        default=1.0,
+        help="row step / line_w; 1.0=side-by-side flat, <1 piles, >1 gaps",
+    )
+    ap.add_argument("--first-flow", type=float, default=1.0, help="first-layer flow multiplier")
+    ap.add_argument("--first-speed", type=float, default=12.0, help="first-layer speed mm/s")
     ap.add_argument("--use-stack", action="store_true")
     ap.add_argument("--ambient", type=float, default=14.0)
     args = ap.parse_args()
 
     bed, nozzle, soak = 65.0, 214.0, 5.0
     profile = HTPLA_BROZZL
-    fl_w, fl_flow, fl_spd, sp_ratio = 0.58, 1.14, 15.0, 0.84
+    # God-tier flat defaults (NOT the old pile-up pack 0.58w / 0.84 step / 1.14 flow)
+    fl_w = float(args.line_w)
+    fl_flow = float(args.first_flow)
+    fl_spd = float(args.first_speed)
+    sp_ratio = float(args.spacing_ratio)
     length = float(args.length)
 
     if args.use_stack:
         from forgeos.stack_profile import compose_stack
 
-        stack = compose_stack(ambient_temp_c=args.ambient, z_adjust_seed=0.08)
+        stack = compose_stack(ambient_temp_c=args.ambient, z_adjust_seed=-0.480)
         bed, nozzle, soak = stack.bed_c, stack.nozzle_c, stack.soak_min
-        # prefer material first_layer if present via pack raw — stack already has fields
-        fl_w = max(0.55, stack.line_width_mm)
-        fl_flow = max(1.12, stack.first_layer_flow)
-        fl_spd = min(16.0, stack.first_layer_speed_mm_s)
+        # Keep explicit flat geometry unless user overrode CLI defaults only for temps/PA
         profile = RetractWipeProfile(
             retract_mm=stack.retract_mm,
             unretract_mm=stack.retract_mm,
@@ -353,8 +366,8 @@ def main() -> int:
             pressure_advance_smooth_time=stack.pressure_advance_smooth_time,
         )
         print(
-            "stack flat-FL w=%.2f flow=%.2f spd=%.1f noz=%.0f retract=%.2f"
-            % (fl_w, fl_flow, fl_spd, nozzle, profile.retract_mm)
+            "stack temps/PA only; FLAT geometry w=%.2f flow=%.2f spd=%.1f ratio=%.2f"
+            % (fl_w, fl_flow, fl_spd, sp_ratio)
         )
 
     if args.bed is not None:
@@ -374,7 +387,16 @@ def main() -> int:
         )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(text, encoding="utf-8")
-    print("wrote", args.output, "mode", args.mode, "length", length if args.mode == "bar" else "n/a")
+    print(
+        "wrote",
+        args.output,
+        "mode",
+        args.mode,
+        "length",
+        length if args.mode == "bar" else "n/a",
+        "step_mm",
+        round(fl_w * sp_ratio, 3),
+    )
     return 0
 
 
