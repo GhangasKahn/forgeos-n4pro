@@ -6,7 +6,7 @@ Zero-trust rule: optimizers never write outside envelopes. Arming is explicit.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 import time
 import secrets
 
@@ -70,6 +70,17 @@ class SafetyGate:
             raise SafetyError("not armed for purpose=%s (zero-trust refuse)" % purpose)
         if token is None or token != held.token:
             raise SafetyError("invalid arming token for purpose=%s" % purpose)
+
+    def arm_runtime(self, ttl_s: float = 3600.0) -> str:
+        """Convenience: arm runtime_micro for adaptive --arm paths."""
+        return self.arm("runtime_micro", ttl_s=ttl_s)
+
+    def sync_printer_arm(self, client: Any, purpose: str = "autotune") -> None:
+        """Mirror host arming to Klipper ``FORGE_ARM`` (best-effort)."""
+        try:
+            client.gcode("FORGE_ARM PURPOSE=%s" % purpose, timeout_s=10.0)
+        except Exception as exc:  # noqa: BLE001 — printer may be offline during unit tests
+            raise SafetyError("failed to sync printer arm: %s" % exc)
 
     def clamp_velocity(self, value: float, role: str = "travel") -> float:
         if role in {"outer_wall", "first_layer", "precision"}:

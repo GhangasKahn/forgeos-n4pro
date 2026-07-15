@@ -122,7 +122,20 @@ Operator runbook with **duration**, **exact procedure**, and **metrics to captur
 
 → [docs/TESTING_SHEET.md](docs/TESTING_SHEET.md)
 
+## Calibration OS (one-time + fine-tune)
+
+```bash
+python3 -m forgeos.calibration plan --suite onetime
+python3 scripts/run_full_cal.py --suite full          # dry-run + write cal gcodes
+python3 -m forgeos.calibration compute-pa --height 6.2
+python3 scripts/run_gates.py --g0
+```
+
+Full sequence (OpenNeptune + Klipper order, N4 Pro dual-bed PID, RD→flow→PA):  
+→ [docs/calibration_protocol.md](docs/calibration_protocol.md)
+
 ## Status
 
-**Phase 0 complete:** skeleton, materials, safety, journal, optimizers, gates, moisture soft-sensor, Klipper overlays, unit tests.  
-Next: Phase 1 live dual-bed/print baseline on the printer + journal T0 cycle time.
+**Phase 0–1 + Calibration OS:** materials, safety, journal, optimizers, gates, moisture,
+Klipper overlays, unified Moonraker client, executable cal campaign (dry-run/live AUTO),
+one-time + fine-tune suites, pattern gcodes, measure→promote.

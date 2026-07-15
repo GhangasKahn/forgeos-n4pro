@@ -110,9 +110,11 @@ class ZeroVisionBrain:
         self,
         state: Optional[ZeroVisionState] = None,
         safety: Optional[SafetyGate] = None,
+        arm_token: Optional[str] = None,
     ) -> None:
         self.state = state or ZeroVisionState()
         self.safety = safety or SafetyGate()
+        self.arm_token = arm_token
         self.bed = DualBedController(
             DualBedState(target_base_c=self.state.base_bed_c)
         )
@@ -353,6 +355,8 @@ class ZeroVisionBrain:
     def scripts_to_apply(self, tick: BrainTick) -> List[str]:
         if tick.mode != "armed":
             return []
+        # Zero-trust: host token required whenever we actually apply
+        self.safety.require_armed("runtime_micro", self.arm_token)
         now = tick.ts
         if now - self.state.last_apply_ts < self.state.min_apply_interval_s:
             return []

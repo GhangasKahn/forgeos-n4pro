@@ -14,7 +14,8 @@ def test_htpla_pex_brozzl_stack():
     assert s.bed_c == 65
     assert 210 <= s.nozzle_c <= 220
     assert s.soak_min >= 4.0
-    assert s.first_layer_speed_mm_s <= 20
+    # Machine-flat pack uses ~30 mm/s × nozzle speed scale (~0.95) — adhesion-limited, not crawl
+    assert 20 <= s.first_layer_speed_mm_s <= 35
     assert s.brim is True
     assert s.glue is False
     assert s.nozzle_type_token == "brozzl_plated_copper"

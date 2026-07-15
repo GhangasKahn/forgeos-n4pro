@@ -1,4 +1,8 @@
-"""FORGE_CAL_FULL campaign state machine (between-print only)."""
+"""FORGE_CAL_FULL campaign state machine — bridges to calibration protocol.
+
+Prefer ``forgeos.calibration.runner.CalibrationRunner`` for executable campaigns.
+This module keeps the legacy step enum used by existing unit tests and docs.
+"""
 
 from __future__ import annotations
 
@@ -6,6 +10,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from forgeos.calibration.protocol import CalSuite, build_plan
 from forgeos.journal import Journal
 from forgeos.safety import SafetyError, SafetyGate
 
@@ -24,6 +29,7 @@ class CalStep(str, Enum):
     FAILED = "failed"
 
 
+# Legacy order (subset of onetime; RD/first_layer/retract live in full protocol)
 STEP_ORDER = [
     CalStep.PID,
     CalStep.RESONANCE,
@@ -91,3 +97,7 @@ class FullCalCampaign:
             CalStep.MEASURE: ["# operator: import caliper CSV / enter dims"],
         }
         return list(mapping.get(self.step, []))
+
+    def full_protocol_plan(self, has_adxl: bool = False):
+        """Return the expanded OpenNeptune-grade onetime+finetune plan."""
+        return build_plan(suite=CalSuite.FULL, sku=self.sku, has_adxl=has_adxl)

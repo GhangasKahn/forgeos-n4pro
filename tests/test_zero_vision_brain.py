@@ -1,3 +1,5 @@
+import pytest
+
 from forgeos.adaptive.thermal_dual_bed import DualBedController, DualBedState
 from forgeos.adaptive.nozzle_thermal import NozzleThermalController, NozzleState
 from forgeos.adaptive.process_brain import ZeroVisionBrain, ZeroVisionState
@@ -73,8 +75,12 @@ def test_brain_suggest_mode_no_apply():
 
 
 def test_brain_armed_can_apply():
+    from forgeos.safety import SafetyGate
+
     st = ZeroVisionState(armed=True, mode="armed", min_apply_interval_s=0)
-    brain = ZeroVisionBrain(st)
+    safety = SafetyGate()
+    token = safety.arm("runtime_micro")
+    brain = ZeroVisionBrain(st, safety=safety, arm_token=token)
     # force bed controller ready
     brain.bed.state.min_adjust_interval_s = 0
     brain.nozzle.state.min_adjust_interval_s = 0
@@ -84,6 +90,15 @@ def test_brain_armed_can_apply():
     assert tick.actions
     assert scripts is not None
 
+
+def test_brain_armed_refuses_without_token():
+    from forgeos.safety import SafetyError, SafetyGate
+
+    st = ZeroVisionState(armed=True, mode="armed", min_apply_interval_s=0)
+    brain = ZeroVisionBrain(st, safety=SafetyGate(), arm_token=None)
+    tick = brain.plan(_status(outer_c=61.0, noz_c=205.0, noz_power=0.95), now=1e9)
+    with pytest.raises(SafetyError):
+        brain.scripts_to_apply(tick)
 
 def test_precision_belief_updates():
     brain = ZeroVisionBrain()

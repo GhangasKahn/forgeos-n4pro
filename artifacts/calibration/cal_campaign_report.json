@@ -1,0 +1,263 @@
+{
+  "suite": "full",
+  "sku": "protopasta_htpla",
+  "dry_run": true,
+  "failed": false,
+  "results": [
+    {
+      "step_id": "preflight",
+      "status": "passed",
+      "detail": "dry-run planned: FORGE_PREFLIGHT",
+      "evidence": {
+        "dry_run": true
+      },
+      "macros_run": [
+        "FORGE_PREFLIGHT"
+      ],
+      "gcode_path": null,
+      "ts": 1784124355.8707705
+    },
+    {
+      "step_id": "bed_screws",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_BED_SCREWS_TUNE"
+      ],
+      "gcode_path": null,
+      "ts": 1784124355.8712285
+    },
+    {
+      "step_id": "probe_z",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_PROBE_CAL"
+      ],
+      "gcode_path": null,
+      "ts": 1784124355.8717072
+    },
+    {
+      "step_id": "rotation_distance",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_EXTRUDE_CAL"
+      ],
+      "gcode_path": "/workspace/artifacts/calibration/forgeos_cal_rotation_distance.gcode",
+      "ts": 1784124355.8725212
+    },
+    {
+      "step_id": "pid",
+      "status": "passed",
+      "detail": "dry-run planned: FORGE_PID_ALL",
+      "evidence": {
+        "dry_run": true
+      },
+      "macros_run": [
+        "FORGE_PID_ALL"
+      ],
+      "gcode_path": null,
+      "ts": 1784124355.8739398
+    },
+    {
+      "step_id": "resonance",
+      "status": "skipped",
+      "detail": "missing capability: adxl",
+      "evidence": {},
+      "macros_run": [],
+      "gcode_path": null,
+      "ts": 1784124355.8751645
+    },
+    {
+      "step_id": "mesh",
+      "status": "passed",
+      "detail": "dry-run planned: FORGE_HEAT_DUAL_BED, FORGE_BED_SOAK, FORGE_MESH_PRECISION",
+      "evidence": {
+        "dry_run": true
+      },
+      "macros_run": [
+        "FORGE_HEAT_DUAL_BED",
+        "FORGE_BED_SOAK",
+        "FORGE_MESH_PRECISION"
+      ],
+      "gcode_path": null,
+      "ts": 1784124355.8765266
+    },
+    {
+      "step_id": "first_layer",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_FIRST_LAYER_CAL"
+      ],
+      "gcode_path": "/workspace/artifacts/calibration/forgeos_cal_first_layer.gcode",
+      "ts": 1784124355.8783069
+    },
+    {
+      "step_id": "flow",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_FLOW_CAL"
+      ],
+      "gcode_path": "/workspace/artifacts/calibration/forgeos_cal_flow.gcode",
+      "ts": 1784124355.8793268
+    },
+    {
+      "step_id": "pressure_advance",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_PA_CAL"
+      ],
+      "gcode_path": "/workspace/artifacts/calibration/forgeos_cal_pressure_advance.gcode",
+      "ts": 1784124355.8806481
+    },
+    {
+      "step_id": "retract",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_RETRACT_CAL"
+      ],
+      "gcode_path": null,
+      "ts": 1784124355.8812318
+    },
+    {
+      "step_id": "coupon",
+      "status": "passed",
+      "detail": "dry-run planned: FORGE_PRINT_COUPON",
+      "evidence": {
+        "dry_run": true
+      },
+      "macros_run": [
+        "FORGE_PRINT_COUPON"
+      ],
+      "gcode_path": "/workspace/artifacts/calibration/forgeos_cal_coupon_README.txt",
+      "ts": 1784124355.881748
+    },
+    {
+      "step_id": "measure",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [],
+      "gcode_path": null,
+      "ts": 1784124355.8834329
+    },
+    {
+      "step_id": "promote",
+      "status": "passed",
+      "detail": "dry-run planned: FORGE_APPLY_CAL_RESULT",
+      "evidence": {
+        "dry_run": true
+      },
+      "macros_run": [
+        "FORGE_APPLY_CAL_RESULT"
+      ],
+      "gcode_path": null,
+      "ts": 1784124355.884295
+    },
+    {
+      "step_id": "temp_fine",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_TEMP_TOWER"
+      ],
+      "gcode_path": null,
+      "ts": 1784124355.8851194
+    },
+    {
+      "step_id": "pa_fine",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_PA_FINE"
+      ],
+      "gcode_path": "/workspace/artifacts/calibration/forgeos_cal_pa_fine.gcode",
+      "ts": 1784124355.8859715
+    },
+    {
+      "step_id": "flow_fine",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_FLOW_FINE"
+      ],
+      "gcode_path": "/workspace/artifacts/calibration/forgeos_cal_flow_fine.gcode",
+      "ts": 1784124355.886716
+    },
+    {
+      "step_id": "flat_fine",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_FIRST_LAYER_CAL"
+      ],
+      "gcode_path": "/workspace/artifacts/calibration/forgeos_cal_flat_fine.gcode",
+      "ts": 1784124355.887471
+    },
+    {
+      "step_id": "g4_precision",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [
+        "FORGE_PRINT_COUPON"
+      ],
+      "gcode_path": "/workspace/artifacts/calibration/forgeos_cal_coupon_README.txt",
+      "ts": 1784124355.8881898
+    },
+    {
+      "step_id": "g5_speed",
+      "status": "passed",
+      "detail": "dry-run operator step planned",
+      "evidence": {},
+      "macros_run": [],
+      "gcode_path": null,
+      "ts": 1784124355.8886912
+    },
+    {
+      "step_id": "anneal_optional",
+      "status": "passed",
+      "detail": "dry-run",
+      "evidence": {
+        "dry_run": true
+      },
+      "macros_run": [],
+      "gcode_path": null,
+      "ts": 1784124355.8892303
+    }
+  ],
+  "recipe": {
+    "sku": "protopasta_htpla",
+    "z_adjust_mm": -0.48,
+    "bed_c": 65.0,
+    "nozzle_c": 214.0,
+    "soak_min": 5.0,
+    "pressure_advance": 0.03,
+    "pressure_advance_smooth_time": 0.03,
+    "flow": 1.0,
+    "retract_mm": 1.2,
+    "retract_speed_mm_s": 40.0,
+    "wipe_mm": 1.4,
+    "z_hop_mm": 0.25,
+    "rotation_distance": null,
+    "mesh_p2p_mm": null,
+    "abs_error_100mm": null,
+    "notes": []
+  }
+}

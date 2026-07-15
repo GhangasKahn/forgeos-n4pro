@@ -46,8 +46,12 @@ def fit_scales(samples: List[DimSample]) -> DimFitResult:
         elif axis == "Z":
             z_scales.append(s.scale)
         elif axis == "HOLE":
-            # holes: if small, often need positive compensation handled separately
-            pass
+            # Undersized holes → positive compensation (extra clearance) handled at CAD/slicer
+            # Track scale inverted vs solid axes for journal visibility
+            if abs(s.measured_mm) > 1e-9:
+                xy_scales.append(s.measured_mm / s.nominal_mm if abs(s.nominal_mm) > 1e-9 else 1.0)
+            if abs(s.nominal_mm) > 1e-9:
+                err100.append(abs(s.error_mm) * (100.0 / abs(s.nominal_mm)))
     xy = sum(xy_scales) / len(xy_scales) if xy_scales else 1.0
     z = sum(z_scales) / len(z_scales) if z_scales else 1.0
     mean_err = sum(err100) / len(err100) if err100 else 0.0

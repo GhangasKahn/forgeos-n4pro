@@ -12,12 +12,14 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from forgeos.adaptive.process_brain import ZeroVisionBrain, ZeroVisionState
+from forgeos.safety import SafetyGate
 from forgeos.vision.bus import MoonrakerBus
 
 
@@ -51,9 +53,17 @@ def main() -> int:
 
     bus = MoonrakerBus(args.moonraker)
     st = ZeroVisionState.load(args.state)
+    safety = SafetyGate()
+    arm_token: Optional[str] = None
+    if args.arm:
+        arm_token = safety.arm_runtime(ttl_s=8 * 3600)
+        try:
+            safety.sync_printer_arm(bus, purpose="autotune")
+        except Exception as exc:  # noqa: BLE001
+            log.warning("printer arm sync failed (continuing with host token): %s", exc)
     st.armed = bool(args.arm)
     st.mode = "armed" if args.arm else "suggest"
-    brain = ZeroVisionBrain(st)
+    brain = ZeroVisionBrain(st, safety=safety, arm_token=arm_token)
 
     names = [
         "print_stats",
