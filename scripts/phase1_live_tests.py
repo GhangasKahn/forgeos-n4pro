@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 import time
 from pathlib import Path
@@ -24,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from forgeos.environment.session import build_session_plan
+from forgeos.calibration.profile import load_machine_profile
 from forgeos.gates.verification import (
     GateStatus,
     VerificationReport,
@@ -36,15 +36,11 @@ from forgeos.materials import default_materials_dir, load_all_packs
 from forgeos.moonraker_client import MoonrakerClient, MoonrakerError
 
 
-def disk_free_mb(path: str = "/") -> float:
-    u = shutil.disk_usage(path)
-    return u.free / (1024.0 * 1024.0)
-
-
 def main() -> int:
+    machine = load_machine_profile()
     ap = argparse.ArgumentParser()
-    ap.add_argument("--host", default="192.168.1.178")
-    ap.add_argument("--port", type=int, default=7125)
+    ap.add_argument("--host", default=str(machine.network["host"]))
+    ap.add_argument("--port", type=int, default=int(machine.network["moonraker_port"]))
     ap.add_argument("--heat", action="store_true", help="Heat dual bed to env target + short soak")
     ap.add_argument("--mesh", action="store_true", help="Home + mesh (MOTION)")
     ap.add_argument("--soak-min", type=float, default=None, help="Override soak minutes for --heat")
@@ -65,25 +61,29 @@ def main() -> int:
 
     # G1
     ready = client.is_ready()
-    free = disk_free_mb("/")  # local free; printer free queried separately
-    printer_free = None
+    printer_free_mb = 0.0
     try:
-        # ask printer via ssh-less heuristic: moonraker machine info memory only
         mi = client._get("/machine/system_info")
         mem = mi.get("result", {}).get("system_info", {}).get("cpu_info", {})
         evidence["cpu_info"] = mem
     except Exception as exc:
         evidence["system_info_error"] = str(exc)
+    try:
+        directory = client.directory_info("gcodes").get("result", {})
+        disk = directory.get("disk_usage", {})
+        printer_free_mb = float(disk.get("free", disk.get("available", 0))) / (1024.0 * 1024.0)
+        evidence["printer_disk_free_mb"] = printer_free_mb
+    except Exception as exc:
+        evidence["printer_disk_error"] = str(exc)
 
-    # Use conservative local disk for laptop; for printer we rely on ready + later ssh note
     g1 = gate_g1_hardware(
         mcu_ready=ready,
-        disk_free_mb=max(free, 500),  # runner disk; printer checked offline in deploy
+        disk_free_mb=printer_free_mb,
         abrasive=False,
         nozzle_ok=True,
     )
     if not ready:
-        g1 = gate_g1_hardware(False, free, False, True)
+        g1 = gate_g1_hardware(False, printer_free_mb, False, True)
     report.add(g1)
     evidence["steps"].append({"g1_ready": ready, "gate": g1.as_dict()})
     journal.log_event("phase1_g1", evidence["steps"][-1])

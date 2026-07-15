@@ -43,12 +43,12 @@ From `python3 scripts/print_stack_profile.py`:
 | Bed | **65 °C** (dual zones) |
 | Nozzle | **~210–213 °C** on plated copper (copper runs hot; raise toward 215–218 only if layers weak) |
 | Soak | **~5–7 min** cold shop |
-| First layer | **0.28 mm**, **18 mm/s**, flow **~1.06**, fan **0** |
-| Retract | **~0.9 mm** @ 35 mm/s |
-| PA seed | **~0.028** (×0.95 Brozzl bias → ~0.027) |
+| First layer | **0.28 mm**, **0.44 mm width**, flow **1.00**, fan **0** |
+| Retract seed | **1.15 mm** @ 40 mm/s |
+| PA seed | **0.032** (must be calibrated per material/nozzle/temperature) |
 | Brim | **on** for coupons/jigs |
 | Glue | **off** on clean PEX |
-| Z seed | **−0.10 mm** live adjust (babystep from there) |
+| Shop Z snapshot | **−0.480 mm** measured on this machine; recalibrate after nozzle/plate/probe changes |
 
 ## Console setup
 
@@ -56,9 +56,9 @@ From `python3 scripts/print_stack_profile.py`:
 FORGE_SET_SURFACE TYPE=pex NAME="WhamBam PEX"
 FORGE_SET_NOZZLE TYPE=brozzl_plated_copper DIA=0.4
 FORGE_SET_MATERIAL SKU=protopasta_htpla
-FORGE_SET_Z_ADJUST Z=-0.10
-FORGE_APPLY_ENV_TARGETS BED=65 NOZ=212 SOAK=6
-FORGE_SET_RETRACT LENGTH=1.20 SPEED=40 WIPE=1.4 ZHOP=0.25
+FORGE_SET_Z_ADJUST Z=-0.480
+FORGE_APPLY_ENV_TARGETS BED=65 NOZ=214 SOAK=5
+FORGE_SET_RETRACT LENGTH=1.15 SPEED=40 WIPE=1.4 ZHOP=0.25
 FORGE_SET_PA PA=0.032 SMOOTH=0.03
 FORGE_PREFLIGHT
 ```
@@ -69,7 +69,7 @@ FORGE_PREFLIGHT
 2. `FORGE_SET_Z_ADJUST` then **Z-tune square**  
 3. Lines should be **squished and stuck**, not round beads  
 4. `FORGE_BABY_DOWN` if high/stringy; `FORGE_BABY_UP` if scraping  
-5. Then G3 bar v2 / production prints  
+5. Then `forgeos_g3_phase2.gcode` / production prints
 
 ## CF exception
 

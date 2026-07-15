@@ -1,13 +1,9 @@
-# Example live printer.cfg composition for ForgeOS install
-# Copy pieces into ~/printer_data/config/ after backup.
+# Example standalone composition for ForgeOS.
+# On OpenNept4une, keep its model-specific printer.cfg and user_settings.cfg;
+# deploy only the overlays, then add the single forge_phase1 include below.
 
 [include forgeos/printer_n4pro.cfg]
-[include forgeos/forge_safety.cfg]
-[include forgeos/forge_mesh.cfg]
-[include forgeos/forge_extrusion.cfg]
-[include forgeos/forge_macros.cfg]
-[include forgeos/forge_moisture.cfg]
-[include forgeos/forge_environment.cfg]
+[include forgeos/forge_phase1.cfg]
 
 # Keep Mainsail client macros if present
 # [include mainsail.cfg]

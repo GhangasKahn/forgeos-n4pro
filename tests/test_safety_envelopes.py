@@ -17,8 +17,8 @@ def test_arming_required():
 def test_clamps():
     g = SafetyGate()
     assert g.clamp_velocity(999, role="outer_wall") == 300
-    assert g.clamp_velocity(999, role="travel") == 500
-    assert g.clamp_accel(50000) == 10000
+    assert g.clamp_velocity(999, role="travel") == 300
+    assert g.clamp_accel(50000) == 5000
     assert g.clamp_nozzle_temp(300) == 240
     assert g.clamp_z_offset_delta(0.5) == 0.02
 

@@ -1,5 +1,5 @@
 {
-  "event": "save_state",
+  "event": "machine_flat_recalibration_baseline",
   "state_file": "configs/saved_state_shop_n4pro.yaml",
   "z_adjust_mm": -0.480,
   "bed_c": 65,
@@ -8,10 +8,10 @@
   "nozzle": "brozzl_plated_copper_0.4",
   "filament": "protopasta_htpla",
   "active_job": {
-    "filename": "forgeos_g3_htpla_100mm_bar_v2.gcode",
-    "state": "printing",
-    "note": "Z locked -0.480 mid G3 bar"
+    "filename": null,
+    "state": "idle",
+    "note": "Old pile-up G3 result retired; run dependency-ordered calibration"
   },
   "live_z": [0.0, 0.0, -0.480, 0.0],
-  "ts_note": "2026-07-14 operator lock Z=-0.480"
+  "ts_note": "2026-07-15 machine-flat baseline; Z retains 2026-07-14 physical measurement"
 }

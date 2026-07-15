@@ -491,29 +491,30 @@ After ≥5 successes, soak/temps stop oscillating wildly; distance_from_homeosta
 
 ---
 
-## D4 · Full calibration campaign `FORGE_CAL_FULL` (Phase 3)
+## D4 · Full dependency-ordered calibration campaign
 
 | | |
 |---|---|
-| **⏱ Duration** | **2–4 hours** first full run (PID + shaper + probe + mesh + flow + PA + coupon + measure)  
-| **Arming** | Requires campaign arm token (zero-trust) |
+| **Runner** | `python3 scripts/calibrate.py plan` then `python3 scripts/calibrate.py next` |
+| **Evidence** | `artifacts/local/calibration_run.json` (local, gitignored) |
 
 **🧪 Steps (exact order)**  
-1. PID (nozzle + both beds) — **15–40 min**  
-2. Resonance/shaper — **10–20 min** (if sensor)  
-3. Probe Z calibrate — **5–10 min**  
-4. Hot mesh after soak — **10–20 min**  
-5. Flow single-wall — **15–30 min**  
-6. PA pattern — **15–30 min**  
-7. Dimensional coupon — **20–45 min**  
-8. Caliper import / fit — **5–10 min**  
-9. Optional anneal loop — **+2–3 h**  
+1. Safety, backup, frame, gantry, tramming and extruder rotation distance.
+2. Hotend plus both bed-zone PID loops.
+3. Probe repeatability, probe Z and heat-soaked golden mesh.
+4. X/Y bed-slinger resonance with accelerometer when installed.
+5. Dryness, temperature, first layer, PA, flow and maximum flow.
+6. Retraction, cooling/bridging and dimensional compensation.
+7. Speed/acceleration validation and three cold-start repeat coupons.
+8. Optional anneal loop with before/after measurements.
 
 **📊 Capture**  
-Campaign journal events for each step OK/fail; final scale/flow/PA written; evidence blob saved.
+Result and evidence for every suite test; final scale/flow/PA written to the
+appropriate printer or slicer profile.
 
 **✅ Pass**  
-Campaign reaches `done` without hard fail; second coupon improves vs first.
+All non-conditional tests pass; conditional skips have reasons; final three
+coupons satisfy the dimensional and repeatability limits.
 
 ---
 

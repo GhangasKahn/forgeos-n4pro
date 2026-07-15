@@ -62,7 +62,7 @@ That pulls safety, mesh, extrusion, moisture, macros, environment, firstlayer.
 
 ---
 
-## Process state to restore (GOOD ENOUGH baseline)
+## Process state to restore (machine-flat recalibration baseline)
 
 **File:** `configs/saved_state_shop_n4pro.yaml`  
 **JSON:** `artifacts/saved_state_shop_n4pro.json`  
@@ -74,12 +74,16 @@ That pulls safety, mesh, extrusion, moisture, macros, environment, firstlayer.
 | Bed | **65 °C** dual zone |
 | Nozzle | **214 °C** |
 | Soak | **5 min** |
-| PA | **0.030** smooth 0.03 |
-| Retract | **1.20 mm** @ 40 mm/s |
+| PA seed | **0.032** smooth 0.03 — recalibrate per material/nozzle/temp |
+| Retract seed | **1.15 mm** @ 40 mm/s |
 | Wipe | **1.4 mm** |
 | Z-hop | **0.25 mm** |
-| First layer | width **0.58**, flow **114%**, ~**14–15 mm/s**, spacing ratio **0.84** |
+| First layer | height **0.28**, width **0.44**, flow **100%**, **30 mm/s**, spacing ratio **1.00** |
 | Purge | **`FORGE_PURGE`** in start macro |
+
+The old pile-up bar result is historical, not acceptance evidence for this
+machine-flat profile. Run `python3 scripts/calibrate.py next`; promote only
+after dimensional and three-print repeatability gates pass.
 
 ### Z history (do not forget)
 1. **−0.10** → empty bed / scrape (too low)  

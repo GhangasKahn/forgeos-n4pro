@@ -17,11 +17,15 @@ class SafetyError(Exception):
 
 @dataclass
 class SafetyEnvelopes:
-    """Exploration ceilings — not the operating point."""
+    """Neptune 4 Pro hardware ceilings — not performance targets.
 
-    max_velocity_mm_s: float = 500.0
+    These mirror ``configs/neptune4pro.yaml`` and the Klipper base. A caller
+    may supply a stricter envelope, but should never exceed machine truth.
+    """
+
+    max_velocity_mm_s: float = 300.0
     max_precision_wall_velocity_mm_s: float = 300.0
-    max_accel_mm_s2: float = 10000.0
+    max_accel_mm_s2: float = 5000.0
     start_accel_mm_s2: float = 5000.0
     nozzle_temp_c: Tuple[float, float] = (190.0, 240.0)
     bed_temp_c: Tuple[float, float] = (0.0, 75.0)

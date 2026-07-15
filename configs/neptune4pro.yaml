@@ -1,0 +1,72 @@
+# Canonical machine envelope for ForgeOS.
+# Measured values (PID, probe Z, mesh and shaper results) belong in Klipper's
+# SAVE_CONFIG block or a calibration run, never in this hardware profile.
+schema_version: 1
+machine:
+  model: Elegoo Neptune 4 Pro
+  firmware_family: OpenNept4une
+  board: ZNP-K1
+  mcu: STM32F401
+  kinematics: cartesian_bed_slinger
+  build_volume_mm: [235.0, 235.0, 225.0]
+
+network:
+  host: 192.168.1.178
+  moonraker_port: 7125
+  ui_port: 81
+
+motion:
+  max_velocity_mm_s: 300.0
+  max_accel_mm_s2: 5000.0
+  max_z_velocity_mm_s: 10.0
+  max_z_accel_mm_s2: 150.0
+  square_corner_velocity_mm_s: 5.0
+  rotation_distance_mm:
+    x: 40.0
+    y: 40.0
+    z: 8.0
+    extruder_seed: 28.888
+  extruder_gear_ratio: "52:10"
+
+thermal:
+  extruder:
+    config_max_c: 300.0
+    calibration_max_c: 260.0
+  inner_bed:
+    config_max_c: 120.0
+    calibration_max_c: 80.0
+  outer_bed:
+    config_max_c: 120.0
+    calibration_max_c: 80.0
+
+probe:
+  type: inductive
+  offset_xy_mm: [-24.25, 20.45]
+  repeatability_range_max_mm: 0.025
+  repeatability_samples: 10
+  mesh_bounds_mm: [10.0, 21.0, 200.0, 204.0]
+  golden_mesh_points: [9, 9]
+  production_mesh_points: [7, 7]
+
+safety:
+  require_operator_for_heat_motion: true
+  require_build_plate_installed: true
+  require_hardened_nozzle_for_abrasive: true
+  adaptive_default: suggest_only
+  z_adjust_step_max_mm: 0.02
+
+acceptance:
+  heater_stability_c: 1.0
+  bed_mesh_range_target_mm: 0.20
+  bed_mesh_range_fail_mm: 0.35
+  dimensional_error_100mm_max_mm: 0.20
+  repeatability_span_3x_max_mm: 0.10
+  extrusion_error_100mm_max_mm: 0.50
+
+references:
+  - https://github.com/OpenNeptune3D/OpenNept4une/wiki/Printer-Calibration-%E2%80%90-Klipper-%26-OrcaSlicer
+  - https://www.klipper3d.org/Rotation_Distance.html
+  - https://www.klipper3d.org/Probe_Calibrate.html
+  - https://www.klipper3d.org/Bed_Mesh.html
+  - https://www.klipper3d.org/Resonance_Compensation.html
+  - https://www.klipper3d.org/Pressure_Advance.html

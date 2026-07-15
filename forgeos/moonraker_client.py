@@ -38,6 +38,10 @@ class MoonrakerClient:
     def printer_info(self) -> Dict[str, Any]:
         return self._get("/printer/info")
 
+    def directory_info(self, path: str = "gcodes") -> Dict[str, Any]:
+        query = urllib.parse.urlencode({"path": path, "extended": "true"})
+        return self._get("/server/files/directory?" + query)
+
     def objects_query(self, object_names: List[str]) -> Dict[str, Any]:
         # Spaces in names like "heater_generic heater_bed_outer" must be encoded
         query = "&".join(urllib.parse.quote(name, safe="") for name in object_names)

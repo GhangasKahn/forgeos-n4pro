@@ -25,6 +25,8 @@ cd ~/forgeos-n4pro
 python3 -m pip install -r requirements.txt
 python3 -m pytest -q
 python3 scripts/run_g0_gate.py
+python3 scripts/calibrate.py audit
+python3 scripts/calibrate.py next
 ```
 
 ## Deploy to printer (safe default = dry-run)
@@ -34,7 +36,9 @@ python3 scripts/run_g0_gate.py
 ./scripts/deploy.sh --apply   # rsync code + copy overlays to config/forgeos
 ```
 
-Then **manually** include overlays in `printer.cfg` after backup (deploy never auto-rewrites live printer.cfg).
+Then **manually** add `[include forgeos/forge_phase1.cfg]` after backing up
+OpenNept4une's `printer.cfg` and `SAVE_CONFIG` section. Deploy never rewrites
+the live root config.
 
 ## Zero-trust gates
 
@@ -51,10 +55,10 @@ J = 0.30*accuracy + 0.25*precision + 0.25*quality + 0.20*time
 Hard fails: dim error > 0.20 mm / 100 mm, precision span > 0.10 mm, delam / first-layer fail.  
 Fast-and-wrong never promotes.
 
-## Hardware
+## Hardware for the full quality envelope
 
-- Hardened nozzle (CF: ≥0.5 mm)
-- ADXL or Beacon/Eddy
+- Hardened nozzle for abrasive CF only (CF: ≥0.5 mm)
+- Rigid accelerometer mount for input-shaper measurement
 - Dryer + calipers + anneal oven
 
 ## Shop stack (your hardware)
@@ -122,7 +126,26 @@ Operator runbook with **duration**, **exact procedure**, and **metrics to captur
 
 → [docs/TESTING_SHEET.md](docs/TESTING_SHEET.md)
 
+## Dependency-ordered calibration
+
+The canonical machine envelope is `configs/neptune4pro.yaml`. Measured PID,
+probe, mesh and shaper values remain per-printer values in Klipper
+`SAVE_CONFIG`; they are never guessed from the repository.
+
+```bash
+python3 scripts/calibrate.py plan
+python3 scripts/calibrate.py init
+python3 scripts/calibrate.py next
+```
+
+The suite covers electrical/mechanical inspection, dual-zone PID, probe
+repeatability/Z, bed mesh, bed-slinger resonance, extrusion, every major
+material tuning control, dimensional compensation, acceleration and 3×
+repeatability. See [the calibration protocol](docs/calibration_protocol.md).
+
 ## Status
 
-**Phase 0 complete:** skeleton, materials, safety, journal, optimizers, gates, moisture soft-sensor, Klipper overlays, unit tests.  
-Next: Phase 1 live dual-bed/print baseline on the printer + journal T0 cycle time.
+**Software baseline:** machine profile, materials, safety, journal, optimizers,
+gates, Klipper overlays and calibration recorder are testable offline.
+Physical quality claims remain provisional until the suite's printer-side
+evidence and three-print repeatability gate pass.
