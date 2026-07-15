@@ -4,9 +4,10 @@
   "nominal_x_mm": 100.0,
   "measured_x_mm": {"min": 99.0, "max": 100.0, "operator_note": "99-100 mm"},
   "error_mm": {"min": -1.0, "max": 0.0},
-  "g3_pass_criterion_mm": 0.20,
-  "g3_verdict": "provisional_borderline",
-  "g3_rationale": "Range spans fail (-1.0) to pass (0.0); need single mean remeasure",
+  "g3_pass_criterion_mm": 0.10,
+  "precision_tier": "cnc",
+  "g3_verdict": "FAIL",
+  "g3_rationale": "Zero-trust: range spans up to 1.0 mm |err|; no single mean. Provisional_borderline killed. CNC requires |err|<=0.10 mm on a stated mean.",
   "z_adjust_mm": -0.480,
   "temps_c": {"bed": 65, "nozzle": 214},
   "t0_print_duration_s": 1298.08,
@@ -18,5 +19,7 @@
     "nozzle": "brozzl_plated_copper_0.4",
     "filament": "protopasta_htpla"
   },
-  "saved_at": "2026-07-14"
+  "saved_at": "2026-07-14",
+  "ledger_corrected_at": "2026-07-15",
+  "next_action": "Caliper long-axis X at 3 points; run: python3 scripts/zero_trust_live.py --g3-mean <mean_mm>"
 }

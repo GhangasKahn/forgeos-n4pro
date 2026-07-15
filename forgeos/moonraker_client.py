@@ -23,7 +23,7 @@ class MoonrakerClient:
         try:
             with urllib.request.urlopen(url, timeout=self.timeout_s) as resp:
                 return json.loads(resp.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError, ConnectionError) as exc:
             raise MoonrakerError("GET %s failed: %s" % (path, exc))
 
     def _post(self, path: str) -> Dict[str, Any]:
@@ -32,7 +32,7 @@ class MoonrakerClient:
         try:
             with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:
                 return json.loads(resp.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError, ConnectionError) as exc:
             raise MoonrakerError("POST %s failed: %s" % (path, exc))
 
     def printer_info(self) -> Dict[str, Any]:

@@ -1,13 +1,12 @@
 # ForgeOS saved shop state — restore after reboot / new session
-# Snapshot: Phase 1 acceptance bar in progress (G3)
-# Date: 2026-07-14
+# Zero-trust: G3 is NOT passed. Historical range 99–100 mm = CNC FAIL until mean remeasure.
+# Date: 2026-07-15 (ledger corrected)
 
-version: 2  # Phase 2 precision lock
+version: 3
 name: shop_n4pro_pex_brozzl_htpla
 description: >
-  Working first-layer baseline after Z-tune on Wham Bam PEX.
-  Operator locked Z adjust = -0.480 mm (homing_origin Z).
-  Purge macro active. Flat first-layer gcode (wide lines, flow 114%).
+  First-layer Z locked at -0.480 mm on Wham Bam PEX + Brozzl plated copper.
+  Machine-flat geometry (spacing=line_w, flow=1.0). G3 CNC pending single mean.
 
 printer:
   host: "192.168.1.178"
@@ -31,7 +30,7 @@ hardware:
     abrasive: false
 
 process:
-  z_adjust_mm: -0.480        # LOCKED 2026-07-14 — do not reset without re-tune
+  z_adjust_mm: -0.480
   bed_c: 65.0
   nozzle_c: 214.0
   soak_min: 5.0
@@ -46,25 +45,33 @@ process:
   wipe_mm: 1.4
   z_hop_mm: 0.25
   first_layer:
+    # MACHINE-FLAT zero iron — not pile-up pack
     height_mm: 0.28
-    line_width_mm: 0.58
-    flow: 1.14
-    speed_mm_s: 14.2
+    line_width_mm: 0.44
+    flow: 1.00
+    speed_mm_s: 18.0
     fan_percent: 0
-    spacing_ratio: 0.84
-  purge: true                # FORGE_PURGE in PRINT_START_ENV
+    spacing_ratio: 1.00
+  purge: true
+
+gates:
+  precision_tier: cnc
+  g0: pass
+  g1: unknown_offline  # requires live Moonraker from this host
+  g2: unknown_offline
+  g3: fail_pending_mean  # range 99–100 mm → worst |err| 1.0 mm vs CNC 0.10
+  g3_evidence: artifacts/g3_measure_20260714.json
+  g4: not_run
+  g5: not_run
 
 files:
-  z_tune_gcode: forgeos_z_tune_square.gcode
-  g3_bar_gcode: forgeos_g3_htpla_100mm_bar_v2.gcode
-  measure_card: artifacts/PHASE1_ACCEPTANCE_MEASURE.md
-  precision_tier: cnc
+  g3_bar_gcode: generate via scripts/generate_g3_bar_gcode.py --use-stack
+  measure_card: artifacts/g3_measure_20260714.json
   stack_doc: docs/STACK_PEX_BROZZL_PROTOPASTA.md
 
 active_job_at_save:
-  filename: forgeos_g3_htpla_100mm_bar_v2.gcode
-  phase: g3_measured_provisional
-  note: "Reprint complete Z=-0.480; operator X=99-100mm → G3 provisional; T0≈21.6min"
+  phase: g3_cnc_fail_pending_remeasure
+  note: "Zero-trust: provisional_borderline killed. Need caliper mean ≤100±0.10 mm."
 
 restore_gcode: |
   FORGE_SET_SURFACE TYPE=pex NAME="WhamBam PEX"
@@ -78,8 +85,7 @@ restore_gcode: |
   FORGE_Z_STATUS
 
 notes:
-  - "Z history: -0.10 empty/scrape → +0.08 ribs → +1.08 float → ~0.90 trial → LOCKED -0.480 (in-print adjust)"
-  - "Deep ribs: increased line width/flow; purge added for tip prime"
-  - "omniforge-runtime stopped during coupons (shaper spam)"
-  - "G3 measure 2026-07-14: X=99-100mm (provisional); T0 print=21.6min wall=39.4min; Z=-0.480"
-  - "Next: remeasure X mean to 0.05mm if possible; G4×3 if hard pass; or flow/PA nudge if consistently short"
+  - "Z locked -0.480 mm — do not reset without re-tune"
+  - "G3 2026-07-14 X=99–100 mm → CNC FAIL until single mean"
+  - "T0 print≈21.6 min (historical)"
+  - "Cloud agent cannot SSH: TCP SYN then RST on :22/:81/:7125 — need LAN Mac or tunnel"
