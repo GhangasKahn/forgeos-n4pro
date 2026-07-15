@@ -152,8 +152,21 @@ browser-harness --doctor
 
 → [docs/COMPUTER_USE.md](docs/COMPUTER_USE.md)
 
+## Local CNC bench (digital twin)
+
+When the shop printer is unreachable, prove process logic offline on a **labeled** Moonraker twin (`sim:true`):
+
+```bash
+python3 scripts/local_cnc_bench.py
+# equivalent:
+python3 scripts/zero_trust_live.py --sim
+```
+
+→ [docs/LOCAL_CNC_BENCH.md](docs/LOCAL_CNC_BENCH.md)
+
 ## Status
 
 **CNC-tier process OS:** calibration suite, zero-vision adaptive, CNC gates (0.10 / 0.05 / Cpk), film/phone swarm removed.  
-**Senses online:** desktop screenshot + Playwright + browser-harness CDP.  
-Next: live G3/G4 coupons against CNC band once printer tunnel exists.
+**Senses online:** desktop + Playwright + browser-harness CDP.  
+**Local bench:** twin G1/mesh + G-code physics + CNC metrology discrimination — ALL_PASS.  
+Next: shop tunnel → real G3 mean calipers.

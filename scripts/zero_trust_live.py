@@ -294,10 +294,31 @@ def main() -> int:
     ap.add_argument("--continue-on-fail", action="store_true")
     ap.add_argument("--g3-mean", type=float, default=None, help="Operator caliper mean mm")
     ap.add_argument(
+        "--sim",
+        action="store_true",
+        help="Use local digital twin on --port (never claims live printer)",
+    )
+    ap.add_argument("--sim-port", type=int, default=17125)
+    ap.add_argument(
         "--report",
         default=str(ROOT / "artifacts" / "zero_trust_live_report.json"),
     )
     args = ap.parse_args()
+
+    if args.sim:
+        # Militant offline path — redirect to local CNC bench
+        from subprocess import run
+
+        cmd = [
+            sys.executable,
+            str(ROOT / "scripts" / "local_cnc_bench.py"),
+            "--port",
+            str(args.sim_port),
+            "--report",
+            args.report.replace("zero_trust_live", "local_cnc_bench"),
+        ]
+        print("SIM MODE → local_cnc_bench (digital twin only)")
+        return run(cmd).returncode
 
     report: Dict[str, Any] = {
         "ts": time.time(),
