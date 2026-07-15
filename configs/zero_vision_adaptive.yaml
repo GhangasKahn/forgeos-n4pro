@@ -17,16 +17,16 @@ baselines:
 
 dual_bed:
   enabled: true
-  outer_bias_seed_c: 1.0      # cold basement: outer often needs more power
-  hold_band_c: 0.8
-  max_zone_delta_c: 4.0
-  max_step_c: 0.5
+  outer_bias_seed_c: 1.0
+  hold_band_c: 0.5          # CNC: tighter zone match
+  max_zone_delta_c: 2.5
+  max_step_c: 0.3
   min_adjust_interval_s: 8.0
 
 nozzle:
   enabled: true
-  hold_band_c: 2.0
-  max_step_c: 2.0
+  hold_band_c: 1.5          # CNC: tighter melt stability
+  max_step_c: 1.5
   min_c: 200
   max_c: 230
   moisture_speed_derate: true
@@ -42,17 +42,20 @@ pressure_advance:
 
 flow:
   enabled: true
-  min: 0.92
-  max: 1.08
-  # only nudge from volume residual — never pile-up spacing
+  min: 0.95
+  max: 1.05
+  # CNC: tighter flow band — volume residual only
 
-objectives:  # weights for precision_belief score
-  bed_uniform: 0.30
+objectives:
+  bed_uniform: 0.35
   nozzle_track: 0.30
   flat_volume: 0.25
-  dry_filament: 0.15
+  dry_filament: 0.10
 
 safety:
   bed_max_c: 72
   nozzle_max_c: 230
   min_apply_interval_s: 2.0
+  precision_tier: cnc
+  dim_error_100mm_fail_mm: 0.10
+  precision_span_3x_fail_mm: 0.05

@@ -58,7 +58,7 @@ files:
   z_tune_gcode: forgeos_z_tune_square.gcode
   g3_bar_gcode: forgeos_g3_htpla_100mm_bar_v2.gcode
   measure_card: artifacts/PHASE1_ACCEPTANCE_MEASURE.md
-  bom_vision: docs/BOM_GOD_TIER_VISION_RIG.md
+  precision_tier: cnc
   stack_doc: docs/STACK_PEX_BROZZL_PROTOPASTA.md
 
 active_job_at_save:

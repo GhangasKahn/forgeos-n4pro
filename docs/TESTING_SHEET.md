@@ -292,7 +292,7 @@ Also:
 - [ ] Ambient T/RH: `___ / ___`  
 
 **✅ Pass (G3)**  
-\|error\| on 100 mm span **≤ 0.20 mm** (aim **≤ 0.15 mm**).  
+\|error\| on 100 mm span **≤ 0.10 mm** (CNC; aim **≤ 0.05 mm**).  
 First layer not critically failed.
 
 **Analysis intent**  
@@ -322,7 +322,7 @@ Print the **same** 100 mm bar gcode three times back-to-back (or same day). Meas
 - [ ] Mean error: `___ mm`  
 
 **✅ Pass (G4)**  
-Span **≤ 0.10 mm** on 100 mm feature.
+Span **≤ 0.05 mm** on 100 mm feature + **Cpk ≥ 1.0** (CNC).
 
 **Analysis intent**  
 **Precision ≠ accuracy.** Tight span with offset → systematic scale fix. Wide span → mechanical play, temp drift, moisture, or process instability.
@@ -420,7 +420,7 @@ PREFLIGHT enforces hardened nozzle; printable coupon without clogs; dims in band
 - [ ] Warpage notes: `__________`  
 
 **✅ Pass (G6)**  
-Post-anneal critical dims within **±0.20 mm** (or stated fixture tolerance) **with** compensation applied on reprint.
+Post-anneal critical dims within **±0.10 mm** (CNC) **with** compensation applied on reprint.
 
 **Analysis intent**  
 Separates **print error** from **crystallization shrink**. Required for heat-resistant jigs that see shop heat or friction.
@@ -550,16 +550,16 @@ Campaign reaches `done` without hard fail; second coupon improves vs first.
 
 # SECTION F — Quick reference: gate → test map
 
-| Gate | Primary test(s) | ⏱ ballpark | Key metric |
-|---|---|---|---|
-| G0 | A0 | 5 min | all unit tests pass |
-| G1 | A3 | 2 min | printer ready |
-| G2 | B1 + B2 + D1 | 20 min–2 h | mesh p2p; shaper stable |
-| G3 | C1 | 40–70 min | \|err\| ≤ 0.20 mm / 100 mm |
-| G4 | C2 | 1.5–3.5 h | span ≤ 0.10 mm |
-| G5 | C3+C4 | +1 print | ≥25% faster than T0 w/ G3 |
-| G6 | C6 | 2.5–4 h | post-anneal dims in band |
-| G7 | D3 | ≥2 h | 0 MCU loss; log health |
+| Gate | Primary test(s) | Key CNC metric |
+|---|---|---|
+| G0 | A0 | all unit tests pass |
+| G1 | A3 | printer ready |
+| G2 | B1 + B2 + D1 | mesh p2p ≤ **0.25 mm** |
+| G3 | C1 | \|err\| ≤ **0.10 mm** / 100 mm |
+| G4 | C2 | span ≤ **0.05 mm** + Cpk ≥ 1.0 |
+| G5 | C3+C4 | ≥25% faster than T0 w/ G3 |
+| G6 | C6 | post-anneal dims in CNC band |
+| G7 | D3 | 0 MCU loss; log health |
 
 ---
 

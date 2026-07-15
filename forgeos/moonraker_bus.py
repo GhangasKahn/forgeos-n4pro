@@ -1,4 +1,7 @@
-"""Moonraker bridge used by Jetson vision service."""
+"""Moonraker control bus — shared by adaptive brain and optional vision loop.
+
+Moved out of forgeos.vision so zero-vision control has no camera dependency.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +9,7 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 class MoonrakerBus:
@@ -50,7 +53,6 @@ class MoonrakerBus:
         return self.gcode("FORGE_BABY_UP")
 
     def apply_dynamic(self, script: str) -> Dict[str, Any]:
-        """Apply a real-time controller script (single or multi-line)."""
         return self.gcode(script)
 
     def set_flow_percent(self, percent: int) -> Dict[str, Any]:

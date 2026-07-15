@@ -9,7 +9,9 @@ from forgeos.gates.verification import GateResult, GateStatus, gate_g3_accuracy,
 
 
 def analyze_mesh_matrix(matrix: Sequence[Sequence[float]]) -> CalAnalysis:
-    """Compute peak-to-peak from Klipper probed_matrix."""
+    """Compute peak-to-peak from Klipper probed_matrix (CNC band default)."""
+    from forgeos.precision import PrecisionTier, get_band
+
     vals = [float(v) for row in matrix for v in row]
     if not vals:
         return CalAnalysis(
@@ -19,16 +21,16 @@ def analyze_mesh_matrix(matrix: Sequence[Sequence[float]]) -> CalAnalysis:
             evidence={"point_count": 0},
         )
     p2p = max(vals) - min(vals)
-    excellent = p2p <= 0.25
-    preferred = p2p <= 0.40
-    hard_ok = p2p <= 0.80
+    band = get_band(PrecisionTier.CNC)
+    excellent = p2p <= band.mesh_preferred_mm
+    hard_ok = p2p <= band.mesh_p2p_max_mm
     passed = hard_ok
     recs: List[str] = []
-    if not preferred:
-        recs.append("Run BED_LEVEL_SCREWS_TUNE then re-mesh; check corner nuts")
-    if not excellent:
-        recs.append("Consider mechanical re-level before chasing slicer Z")
-    tier = "excellent" if excellent else "preferred" if preferred else "acceptable" if hard_ok else "fail"
+    if not hard_ok:
+        recs.append("CNC fail: run BED_LEVEL_SCREWS_TUNE + re-mesh; check corner nuts")
+    elif not excellent:
+        recs.append("Tighten screws / re-soak dual bed for CNC preferred ≤%.2f mm" % band.mesh_preferred_mm)
+    tier = "excellent" if excellent else "cnc_ok" if hard_ok else "fail"
     return CalAnalysis(
         "mesh_precision",
         passed,
@@ -39,6 +41,7 @@ def analyze_mesh_matrix(matrix: Sequence[Sequence[float]]) -> CalAnalysis:
             "max_mm": round(max(vals), 4),
             "point_count": len(vals),
             "tier": tier,
+            "limit_mm": band.mesh_p2p_max_mm,
         },
         recommendations=recs,
     )
@@ -142,30 +145,46 @@ def analyze_retraction_tower(
 
 
 def analyze_precision_span(measurements_mm: Sequence[float], nominal_mm: float = 100.0) -> CalAnalysis:
-    """G4 precision: span across replicate prints."""
+    """G4 precision + CNC process capability (span, stdev, Cpk)."""
+    from forgeos.precision import PrecisionTier, process_capability
+
     if len(measurements_mm) < 2:
         return CalAnalysis("precision_replicate", False, "need >=2 measurements")
-    span = max(measurements_mm) - min(measurements_mm)
-    errors = [m - nominal_mm for m in measurements_mm]
-    g4 = gate_g4_precision(span)
+    cap = process_capability(measurements_mm, nominal_mm=nominal_mm, tier=PrecisionTier.CNC)
+    g4 = gate_g4_precision(cap.span_mm)
+    passed = g4.status == GateStatus.PASS and cap.passed
     return CalAnalysis(
         "precision_replicate",
-        g4.status == GateStatus.PASS,
-        g4.detail,
+        passed,
+        "%s; Cpk=%s stdev=%.4f" % (g4.detail, cap.cpk, cap.stdev_mm),
         evidence={
-            "span_mm": round(span, 4),
+            "span_mm": cap.span_mm,
             "measurements_mm": list(measurements_mm),
-            "errors_mm": [round(e, 4) for e in errors],
-            "mean_error_mm": round(sum(errors) / len(errors), 4),
+            "mean_error_mm": cap.mean_error_mm,
+            "stdev_mm": cap.stdev_mm,
+            "cp": cap.cp,
+            "cpk": cap.cpk,
+            "capability": cap.as_dict(),
             "gate": g4.as_dict(),
         },
+        recommendations=(
+            []
+            if passed
+            else ["Tighten process: re-check flow/PA/Z; print 3× again for CNC Cpk≥1.0"]
+        ),
     )
 
 
 def analyze_accuracy_error(measured_mm: float, nominal_mm: float = 100.0) -> CalAnalysis:
-    """G3 accuracy: single measurement vs nominal."""
+    """G3 accuracy: single measurement vs CNC band."""
+    from forgeos.precision import scale_correction
+
     err = measured_mm - nominal_mm
     g3 = gate_g3_accuracy(err)
+    scale = scale_correction(nominal_mm, measured_mm)
+    recs: List[str] = []
+    if not g3.status == GateStatus.PASS:
+        recs.append("Apply XY scale ≈ %.5f on next coupon" % scale)
     return CalAnalysis(
         "dimensional_accuracy",
         g3.status == GateStatus.PASS,
@@ -175,8 +194,10 @@ def analyze_accuracy_error(measured_mm: float, nominal_mm: float = 100.0) -> Cal
             "nominal_mm": nominal_mm,
             "error_mm": round(err, 4),
             "abs_error_mm": round(abs(err), 4),
+            "recommended_xy_scale": round(scale, 6),
             "gate": g3.as_dict(),
         },
+        recommendations=recs,
     )
 
 

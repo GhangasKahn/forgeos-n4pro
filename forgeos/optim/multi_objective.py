@@ -17,10 +17,11 @@ from forgeos.safety import SafetyEnvelopes
 
 @dataclass
 class ObjectiveWeights:
-    accuracy: float = 0.30
-    precision: float = 0.25
-    quality: float = 0.25
-    time: float = 0.20
+    # CNC-first: accuracy + precision outweigh speed
+    accuracy: float = 0.35
+    precision: float = 0.30
+    quality: float = 0.20
+    time: float = 0.15
 
     def normalized(self) -> "ObjectiveWeights":
         s = self.accuracy + self.precision + self.quality + self.time

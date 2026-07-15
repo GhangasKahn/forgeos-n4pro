@@ -1,19 +1,8 @@
-# ForgeOS multi-view vision rig (Jetson-side config)
-# Device paths are examples — run `v4l2-ls` / `ls /dev/video*` on Jetson to fill in.
+# Optional Jetson vision rig — cameras later. Zero-vision adaptive is primary.
 
 printer:
   moonraker_url: "http://192.168.1.178:7125"
-  # optional websocket: ws://192.168.1.178:7125/websocket
   name: "neptune4pro-znp-k1"
-
-# Temporary eyes: Nothing Phone 4a Pro (or any Android) via IP Webcam app
-# Set url after Start server, e.g. http://192.168.1.42:8080
-phone_camera:
-  enabled: true
-  url: "http://192.168.1.250:8080"  # Nothing Phone 4a Pro / IP Webcam
-  role: oblique_or_chamber  # mount phone looking at bed / first layer
-  snapshot_path: "/shot.jpg"
-  notes: "IP Webcam app → Start server → same Wi-Fi as Mac"
 
 jetson:
   host_role: "vision_brain"
@@ -22,92 +11,48 @@ jetson:
 
 cameras:
   cam_chamber:
-    enabled: true
+    enabled: false
     device: "/dev/video0"
     role: chamber
-    width: 1280
-    height: 720
-    fps: 10
-    notes: "Wide view of full bed — spaghetti / shift / presence"
-
   cam_nozzle:
-    enabled: true
+    enabled: false
     device: "/dev/video2"
     role: nozzle
-    width: 640
-    height: 480
-    fps: 15
-    notes: "Toolhead nozzle cam — first layer + ooze whisker"
-
-  cam_oblique:
-    enabled: true
-    device: "/dev/video4"
-    role: oblique
-    width: 1280
-    height: 720
-    fps: 8
-    notes: "35 degree first-layer sheet — ribs / lift / squish"
 
 thermal:
   ir_bed:
-    enabled: false  # enable when hardware attached
-    type: mlx90640   # or lepton
-    device: "i2c-1"
-    fps: 2
-    notes: "Bed heat map — dual zone soak / dissipation"
-
-  ir_hotend:
     enabled: false
     type: mlx90640
-    fps: 1
 
-modes:
-  FIRST_LAYER:
-    cameras: [cam_nozzle, cam_oblique, cam_chamber]
-    thermal: [ir_bed]
-    score: first_layer
-  HEAT_SOAK:
-    cameras: [cam_chamber]
-    thermal: [ir_bed]
-    score: thermal_map
-  LAYER_AUDIT:
-    cameras: [cam_chamber]
-    every_n_layers: 5
-  FAULT_BURST:
-    cameras: [cam_chamber, cam_nozzle, cam_oblique]
-    thermal: [ir_bed]
-
-policy:
-  auto_apply: false          # true only when vision-armed / --arm
-  max_baby_step_mm: 0.02
-  max_total_z_adjust_mm: 0.15
-  pause_on_spaghetti: true
-  suggest_only_default: true
-
-# Fully dynamic real-time control loop (hot-reloaded by service)
 realtime:
   enabled: true
-  interval_s: 0.25           # 4 Hz control tick (raise to 0.1 for 10 Hz)
-  alpha: 0.30                # EMA reactivity (higher = more real-time)
-  min_apply_interval_s: 1.5  # rate-limit physical actuators
+  interval_s: 0.25
+  alpha: 0.30
+  min_apply_interval_s: 1.5
   journal: true
   sources:
-    telemetry: true          # Moonraker objects — always on
-    cameras: true            # when capture wired
-    thermal: true
+    telemetry: true
+    cameras: false
+    thermal: false
   control:
-    flat_surface_mode: true  # FORGE_FLAT_SURFACE_MODE each layer window
+    flat_surface_mode: true
     z_babystep: true
-    flow_m221: true          # volume balance nudges (NOT ironing)
-    speed_m220: true         # thermal lag / recover
-    pressure_advance: false  # enable after PA model online
+    flow_m221: true
+    speed_m220: true
+    pressure_advance: false
   objectives:
-    flatness: 0.35
-    adhesion_z: 0.25
+    flatness: 0.40
+    adhesion_z: 0.30
     thermal: 0.20
-    speed: 0.20
+    speed: 0.10
   zero_ironing: true
   machine_flat_geometry:
     line_w_mm: 0.44
     spacing_ratio: 1.00
     flow: 1.00
+
+policy:
+  auto_apply: false
+  max_baby_step_mm: 0.02
+  max_total_z_adjust_mm: 0.15
+  suggest_only_default: true

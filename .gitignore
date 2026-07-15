@@ -15,6 +15,11 @@ logs/
 .idea/
 .vscode/
 artifacts/local/
+artifacts/gcodes/
+artifacts/*_journal.jsonl
+artifacts/*_report.json
+artifacts/*_state.json
+artifacts/session_*.json
 *.db
 *.sqlite3
 id_rsa*

@@ -105,10 +105,10 @@ def test_n4_pro_dual_bed_tests():
 
 
 def test_mesh_analysis_excellent():
-    matrix = [[0.0, 0.1, 0.2], [0.05, 0.15, 0.25], [0.1, 0.2, 0.25]]
+    matrix = [[0.0, 0.05, 0.10], [0.02, 0.08, 0.12], [0.04, 0.09, 0.14]]
     r = analyze_mesh_matrix(matrix)
     assert r.passed
-    assert r.evidence["peak_to_peak_mm"] == pytest.approx(0.25, abs=0.01)
+    assert r.evidence["peak_to_peak_mm"] == pytest.approx(0.14, abs=0.01)
     assert r.evidence["tier"] == "excellent"
 
 
@@ -119,7 +119,6 @@ def test_mesh_analysis_fail():
 
 
 def test_pa_tower_analysis():
-    # 12.5 mm / 0.2 layer = layer 62.5 → PA = 0 + 62.5 * 0.005 = 0.3125 capped
     r = analyze_pa_tower_height(12.5, start_pa=0.0, step_factor=0.005, layer_height_mm=0.2)
     assert r.passed
     assert 0.02 <= r.evidence["pressure_advance"] <= 0.2
@@ -138,12 +137,13 @@ def test_flow_analysis_under():
 
 
 def test_g3_accuracy_pass_fail():
-    assert analyze_accuracy_error(100.10, 100.0).passed
-    assert not analyze_accuracy_error(100.25, 100.0).passed
+    assert analyze_accuracy_error(100.08, 100.0).passed
+    assert not analyze_accuracy_error(100.15, 100.0).passed
+    assert "recommended_xy_scale" in analyze_accuracy_error(100.15, 100.0).evidence
 
 
 def test_g4_precision_span():
-    assert analyze_precision_span([100.0, 100.05, 99.98]).passed
+    assert analyze_precision_span([100.0, 100.02, 99.99]).passed
     assert not analyze_precision_span([100.0, 100.15, 99.90]).passed
 
 
@@ -153,7 +153,7 @@ def test_temp_tower_analysis():
 
 
 def test_gate_result_from_measurement_g3():
-    m = CalMeasurement("dimensional_accuracy", {"error_mm": 0.15})
+    m = CalMeasurement("dimensional_accuracy", {"error_mm": 0.08})
     g = gate_result_from_measurement(m)
     assert g is not None
     assert g.status == GateStatus.PASS

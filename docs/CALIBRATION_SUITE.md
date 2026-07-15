@@ -57,17 +57,19 @@ python3 scripts/run_calibration_suite.py live one_time --host 192.168.1.178 --dr
 | `temperature_tower` | Nozzle temp | Best surface/bridge layer |
 | `retraction_distance` | Stringing control | Cleanest tower layer |
 | `speed_accel` | Motion limits | No ringing (needs shaper) |
-| `mesh_fast` | Production mesh | p2p ≤ 0.80 mm |
+| `mesh_fast` | Production mesh | p2p ≤ 0.25 mm (CNC) |
 
-## Gate verification (zero-trust)
+## Gate verification (CNC / zero-trust)
 
-| Gate | Test ID | Metric |
+| Gate | Test ID | CNC metric |
 |---|---|---|
-| G3 | `dimensional_accuracy` | \|error\| ≤ 0.20 mm / 100 mm |
-| G4 | `precision_replicate` | 3× span ≤ 0.10 mm |
+| G3 | `dimensional_accuracy` | \|error\| ≤ 0.10 mm / 100 mm |
+| G4 | `precision_replicate` | 3× span ≤ 0.05 mm + Cpk ≥ 1.0 |
 | G5 | `speed_regression` | ≥25% faster than T0, G3 holds |
-| G6 | `anneal_dimensional` | Post-anneal dims in band |
+| G6 | `anneal_dimensional` | Post-anneal dims in CNC band |
 | G7 | `reliability_soak` | ≥2 h, 0 MCU losses |
+
+Tiers: `shop` (0.20/0.10) → `fixture` (0.15/0.08) → **`cnc` (0.10/0.05)** default. See `forgeos/precision.py`.
 
 ## Klipper macros
 

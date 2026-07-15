@@ -10,8 +10,8 @@ def clamp01(x: float) -> float:
     return max(0.0, min(1.0, float(x)))
 
 
-def accuracy_score(abs_error_100mm: float, fail_mm: float = 0.20, perfect_mm: float = 0.02) -> float:
-    """1.0 at <=perfect, 0.0 at >=fail, linear between."""
+def accuracy_score(abs_error_100mm: float, fail_mm: float = 0.10, perfect_mm: float = 0.02) -> float:
+    """1.0 at <=perfect, 0.0 at >=fail, linear between. CNC fail default 0.10 mm."""
     e = abs(float(abs_error_100mm))
     if e >= fail_mm:
         return 0.0
@@ -20,7 +20,7 @@ def accuracy_score(abs_error_100mm: float, fail_mm: float = 0.20, perfect_mm: fl
     return clamp01(1.0 - (e - perfect_mm) / (fail_mm - perfect_mm))
 
 
-def precision_score(span_mm: float, fail_mm: float = 0.10, perfect_mm: float = 0.02) -> float:
+def precision_score(span_mm: float, fail_mm: float = 0.05, perfect_mm: float = 0.015) -> float:
     s = abs(float(span_mm))
     if s >= fail_mm:
         return 0.0

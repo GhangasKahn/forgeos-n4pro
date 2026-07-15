@@ -26,9 +26,12 @@ class SafetyEnvelopes:
     nozzle_temp_c: Tuple[float, float] = (190.0, 240.0)
     bed_temp_c: Tuple[float, float] = (0.0, 75.0)
     max_z_offset_step_mm: float = 0.02
-    dim_error_100mm_fail_mm: float = 0.20
-    precision_span_3x_fail_mm: float = 0.10
+    dim_error_100mm_fail_mm: float = 0.10  # CNC default (was 0.20 shop)
+    precision_span_3x_fail_mm: float = 0.05  # CNC default (was 0.10 shop)
+    precision_tier: str = "cnc"  # shop | fixture | cnc
     require_hardened_for_abrasive: bool = True
+    mesh_p2p_fail_mm: float = 0.25  # CNC mesh hard fail
+    max_z_babystep_total_mm: float = 1.0
 
 
 @dataclass

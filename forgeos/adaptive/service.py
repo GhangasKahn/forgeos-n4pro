@@ -18,7 +18,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from forgeos.adaptive.process_brain import ZeroVisionBrain, ZeroVisionState
-from forgeos.vision.bus import MoonrakerBus
+from forgeos.moonraker_bus import MoonrakerBus
 
 
 log = logging.getLogger("forgeos.adaptive")

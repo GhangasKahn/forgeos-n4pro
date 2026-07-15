@@ -171,9 +171,9 @@ FORGE_PRINT_START_ENV BED=65 EXTRUDER=214 SOAK=5
 | `docs/TESTING_SHEET.md` | All tests, times, metrics |
 | `docs/STACK_PEX_BROZZL_PROTOPASTA.md` | Hardware stack |
 | `docs/RETRACT_WIPE_OOZE.md` | Anti-whisker purge/retract |
-| `docs/FIRST_LAYER_FIX.md` | Z / ribs / adhesion |
+| `docs/MACHINE_FLAT_ZERO_IRON.md` | Z / ribs / adhesion |
 | `docs/VISION_ML_JETSON_STACK.md` | Multi-cam + Jetson architecture |
-| `docs/BOM_GOD_TIER_VISION_RIG.md` | Full shopping list SKUs |
+| `docs/VISION_ML_JETSON_STACK.md` | Full shopping list SKUs |
 | `docs/environment_homeostasis.md` | Basement env control |
 | `docs/zero_trust_gates.md` | G0–G7 gates |
 | `artifacts/PHASE1_RESULTS.md` | Phase 1 live test results |
@@ -188,7 +188,7 @@ FORGE_PRINT_START_ENV BED=65 EXTRUDER=214 SOAK=5
 - Thermal: MLX90640 / FLIR Lepton  
 - **No LiDAR v1**  
 - Code scaffold: `forgeos/vision/`, `configs/vision_rig.yaml`  
-- Full BOM: `docs/BOM_GOD_TIER_VISION_RIG.md`  
+- Full BOM: `docs/VISION_ML_JETSON_STACK.md`  
 
 ---
 

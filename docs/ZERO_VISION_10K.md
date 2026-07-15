@@ -103,8 +103,8 @@ State: `artifacts/zero_vision_state.json`
 1. Run brain **suggest-only** through a full print  
 2. Inspect journal — no crazy temp swings  
 3. `--arm` on a scrap coupon  
-4. G3 bar measure \|err\| ≤ 0.20 mm  
-5. G4×3 span ≤ 0.10 mm  
+4. G3 bar measure \|err\| ≤ **0.10 mm** (CNC)  
+5. G4×3 span ≤ **0.05 mm** + Cpk ≥ 1.0  
 6. Only then claim shop pilot  
 
 ## What still needs hardware later (not required now)

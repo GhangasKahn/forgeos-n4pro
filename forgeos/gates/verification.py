@@ -131,8 +131,13 @@ def gate_g1_hardware(mcu_ready: bool, disk_free_mb: float, abrasive: bool, nozzl
     )
 
 
-def gate_g2_process_sensors(mesh_peak_to_peak_mm: float, shaper_ok: bool, thermal_stable: bool) -> GateResult:
-    if mesh_peak_to_peak_mm > 0.8:
+def gate_g2_process_sensors(
+    mesh_peak_to_peak_mm: float,
+    shaper_ok: bool,
+    thermal_stable: bool,
+    mesh_limit_mm: float = 0.25,
+) -> GateResult:
+    if mesh_peak_to_peak_mm > mesh_limit_mm:
         return GateResult("G2", "mesh_shaper_thermal", GateStatus.FAIL, "mesh p2p too high")
     if not shaper_ok:
         return GateResult("G2", "mesh_shaper_thermal", GateStatus.FAIL, "shaper not validated")
@@ -143,43 +148,43 @@ def gate_g2_process_sensors(mesh_peak_to_peak_mm: float, shaper_ok: bool, therma
         "mesh_shaper_thermal",
         GateStatus.PASS,
         "mesh_p2p=%.3f" % mesh_peak_to_peak_mm,
-        {"mesh_peak_to_peak_mm": mesh_peak_to_peak_mm},
+        {"mesh_peak_to_peak_mm": mesh_peak_to_peak_mm, "mesh_limit_mm": mesh_limit_mm},
     )
 
 
-def gate_g3_accuracy(abs_error_100mm: float, limit_mm: float = 0.20) -> GateResult:
+def gate_g3_accuracy(abs_error_100mm: float, limit_mm: float = 0.10) -> GateResult:
     if abs(abs_error_100mm) > limit_mm:
         return GateResult(
             "G3",
             "dimensional_accuracy",
             GateStatus.FAIL,
             "|err|=%.3f > %.3f" % (abs(abs_error_100mm), limit_mm),
-            {"abs_error_100mm": abs_error_100mm},
+            {"abs_error_100mm": abs_error_100mm, "limit_mm": limit_mm},
         )
     return GateResult(
         "G3",
         "dimensional_accuracy",
         GateStatus.PASS,
         "|err|=%.3f" % abs(abs_error_100mm),
-        {"abs_error_100mm": abs_error_100mm},
+        {"abs_error_100mm": abs_error_100mm, "limit_mm": limit_mm},
     )
 
 
-def gate_g4_precision(span_mm: float, limit_mm: float = 0.10) -> GateResult:
+def gate_g4_precision(span_mm: float, limit_mm: float = 0.05) -> GateResult:
     if span_mm > limit_mm:
         return GateResult(
             "G4",
             "precision_replicate",
             GateStatus.FAIL,
             "span=%.3f > %.3f" % (span_mm, limit_mm),
-            {"span_mm": span_mm},
+            {"span_mm": span_mm, "limit_mm": limit_mm},
         )
     return GateResult(
         "G4",
         "precision_replicate",
         GateStatus.PASS,
         "span=%.3f" % span_mm,
-        {"span_mm": span_mm},
+        {"span_mm": span_mm, "limit_mm": limit_mm},
     )
 
 
@@ -204,7 +209,7 @@ def gate_g5_speed(duration_s: float, baseline_s: float, min_improvement: float =
     )
 
 
-def gate_g6_anneal(post_err_mm: float, limit_mm: float = 0.20) -> GateResult:
+def gate_g6_anneal(post_err_mm: float, limit_mm: float = 0.10) -> GateResult:
     if abs(post_err_mm) > limit_mm:
         return GateResult(
             "G6",

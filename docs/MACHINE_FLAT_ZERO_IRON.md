@@ -76,7 +76,7 @@ Machine-flat default used in ForgeOS:
 3. Q ≤ 0.92 × Q_max.
 
 ### Gate F4 — Dimensional (G3) still holds
-Machine-flat must not steal accuracy: 100 mm bar \|err\| ≤ 0.20 mm after flat pack.
+Machine-flat must not steal accuracy: 100 mm bar \|err\| ≤ **0.10 mm** (CNC) after flat pack.
 
 ---
 
