@@ -26,6 +26,7 @@ from forgeos.calibration.registry import (
 )
 
 test_by_id = get_calibration_test
+from forgeos.calibration.ledger import GateLedger, GateRecord
 from forgeos.calibration.runner import CalibrationRunner, CalStepResult
 
 __all__ = [
@@ -35,6 +36,8 @@ __all__ = [
     "CalStepResult",
     "CalTestDef",
     "CalibrationRunner",
+    "GateLedger",
+    "GateRecord",
     "analyze_flow_wall_thickness",
     "analyze_mesh_matrix",
     "analyze_pa_tower_height",

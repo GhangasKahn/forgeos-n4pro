@@ -1,5 +1,149 @@
 # Session handoff — Kyle + Grok (ForgeOS / Neptune 4 Pro)
 
+**Saved:** 2026-07-15 (mechanics-only god-tier refactor in progress)  
+**Canonical worktree:** `/Users/kylefetes/forgeos-n4pro-cal`  
+**Branch:** `cursor/calibration-suite-refactor-0319`  
+**Mandate:** mechanics + physics + electronics + process control — **ZERO VISION**  
+**Printer:** `znp-k1` · **192.168.1.178 only** · Host `n4pro` · mks  
+
+---
+
+## LIVE STATUS 2026-07-15
+
+### Refactor (Phases 0–2 offline)
+
+| Item | Status |
+|---|---|
+| Vision / computer_use / Jetson docs removed | **DONE** |
+| requirements slimmed to PyYAML + pytest | **DONE** |
+| `MoonrakerClient` upload/start/poll/snapshot | **DONE** |
+| `forgeos/core/evidence.py` | **DONE** |
+| `forgeos/calibration/ledger.py` (G2/G3/G4) | **DONE** |
+| `gcode_for_test_id` + plan `cnc_close` | **DONE** |
+| hub `cal` / `cnc` commands | **DONE** |
+| pytest | **97 passed** · G0 pass |
+| Hermes/swarm/film (master only) | not in cal tree; master still dirty with bulk |
+
+### Live printer
+
+| Item | Evidence |
+|---|---|
+| PRINTER_REAL | earlier wait_for_printer + SSH banner |
+| Z lock | `homing_origin Z = -0.480` |
+| Mesh G2 | p2p **0.195** ≤ 0.25 — `artifacts/mesh_loaded_20260715_104843.json` |
+| G3 job | `forgeos_g3_cnc_campaign.gcode` SHA `dcd7b9ae…` uploaded |
+| Print state | **paused** (print_duration ~344 s) — operator action required |
+| G3 mean | **NOT YET** — need single caliper mean for CNC ≤0.10 |
+| G4 | **NOT RUN** |
+
+### Operator next
+
+1. Inspect paused G3 job (bed clear? failure? intentional pause). Resume or cancel+reprint.  
+2. After cool: caliper **one mean mm** on 100 mm X bar.  
+3. `python3 scripts/run_calibration_suite.py analyze g3 --measured <MEAN>`  
+4. G4 ×3 same process window → `analyze g4 --measurements a b c`  
+5. Do **not** FIRMWARE_RESTART while a useful print is on the plate.
+
+### Daily commands
+
+```bash
+cd /Users/kylefetes/forgeos-n4pro-cal
+./scripts/forge_mac_hub.sh status|deploy|zt|g0|cal|cnc
+python3 scripts/wait_for_printer.py --host 192.168.1.178 --max-wait 30
+python3 scripts/restore_saved_state.py
+```
+
+### Cloud note
+
+Cloud agents still cannot SSH to RFC1918 without a real tunnel (`docs/CLOUD_SSH_BRIDGE.md`). Mac LAN is the live path.
+
+---
+
+## Prior handoff content
+
+# Session handoff — Kyle + Grok (ForgeOS / Neptune 4 Pro)
+
+**Saved:** 2026-07-15 (live LAN campaign in progress)  
+**Active worktree:** `/Users/kylefetes/forgeos-n4pro-cal`  
+**Branch:** `cursor/calibration-suite-refactor-0319`  
+**Printer:** Elegoo Neptune 4 Pro · `znp-k1` · **192.168.1.178 only** · SSH `mks@` / Host `n4pro`  
+**Password (local only, never commit):** mks/makerbase  
+
+---
+
+## LIVE CAMPAIGN 2026-07-15 — status board
+
+### Definition-of-done checklist (evidence only)
+
+| Item | Status | Evidence |
+|---|---|---|
+| SSH ControlMaster `n4pro` | **PASS** | `ssh n4pro` → hostname `znp-k1`, user `mks` |
+| `wait_for_printer.py` | **PASS** | `PRINTER_REAL` — SSH- banner + Moonraker JSON |
+| `forge_mac_hub.sh status` | **PASS** | earlier session; Moonraker ready |
+| Deploy + overlays on printer | **PASS** | `~/printer_data/config/forgeos/*` incl. `forge_calibration.cfg` |
+| `printer.cfg` ForgeOS include | **PASS** | line 218: `[include forgeos/forge_phase1.cfg]`; backup `printer.cfg.bak.20260715104751` |
+| Saved state restore; Z=−0.480 | **PASS** | `artifacts/live_restore_20260715_104814.json` — `homing_origin[2]=-0.48`; re-asserted before G3 start |
+| Zero-trust atoms L0–L3 | **PASS** | `artifacts/zero_trust_live_report.json` — non-empty HTTP/SSH payloads |
+| Zero-trust L4 ledger G3 | **FAIL (expected)** | historical range 99–100 mm → worst \|err\|=1.0 vs CNC 0.10; lies killed |
+| pytest + G0 on Mac | **PASS** | 103 passed; G0 in L1 |
+| Mesh G2 (loaded profile) | **PASS** | `artifacts/mesh_loaded_20260715_104843.json` — p2p **0.195** ≤ 0.25 |
+| G3 CNC mean \|err\|≤0.10 | **IN PROGRESS** | print started; caliper mean not yet |
+| G4 n≥3 span≤0.05 Cpk≥1.0 | **NOT RUN** | blocked on G3 mean |
+| Cloud agent live SSH | **BLOCKED** | needs tunnel per `docs/CLOUD_SSH_BRIDGE.md` — Mac hub is daily path |
+
+### Active print (Phase 6)
+
+| Field | Value |
+|---|---|
+| Job | `forgeos_g3_cnc_campaign.gcode` |
+| Remote | `~/printer_data/gcodes/forgeos_g3_cnc_campaign.gcode` |
+| SHA256 | `dcd7b9ae2f8c1b7d64c73700dc90a9a7abe4b4d28b450a34241def7b7f15ad54` |
+| Start | 2026-07-15 ~10:49 local |
+| Stack | bed **65** / noz **214** / soak **5** / FL h=0.28 w=0.44 flow=1.00 spd=**18** fan=0 spacing=1.00 |
+| Z | **−0.480** (do not reset) |
+| PA in gcode | 0.0315 (stack); process target 0.030 re-applied via macros pre-start |
+| Log | `artifacts/cal_run_log_20260715.jsonl` · status `artifacts/g3_print_status_20260715.json` |
+| Meta | `artifacts/g3_job_meta_20260715.json` |
+
+**Operator next (blocking CNC G3):** after cool, digital calipers on 100 mm X bar → **ONE mean mm** (not a range). Then:
+
+```bash
+cd /Users/kylefetes/forgeos-n4pro-cal
+python3 scripts/run_calibration_suite.py analyze g3 --measured <MEAN>
+# or
+python3 scripts/zero_trust_live.py --host 192.168.1.178 --ssh-probe --g3-mean <MEAN>
+```
+
+Write `artifacts/g3_measure_20260715.json` with: mean_mm, n, caliper_id, ambient_c, operator, gcode sha, z_adjust, bed_c, nozzle_c, pa, verdict.
+
+### Daily Mac path
+
+```bash
+cd /Users/kylefetes/forgeos-n4pro-cal   # or ~/forgeos-n4pro after merge
+./scripts/forge_mac_hub.sh status|deploy|zt|open|sim
+ssh n4pro 'hostname'
+python3 scripts/wait_for_printer.py --host 192.168.1.178 --max-wait 30
+```
+
+### Explicit cloud note
+
+Cloud agents still **cannot** reach `192.168.1.178` (RFC1918 SYN-sink). They need a **real** outbound tunnel (Tailscale / CF / reverse SSH) per `docs/CLOUD_SSH_BRIDGE.md`. On-LAN Mac hub does **not** need the bridge.
+
+### Risks still open
+
+- Moisture / draft on basement open machine
+- Z drift if crash or mesh rewrite without re-verify
+- G3 historical range lie already killed — need new mean only
+- Do not run abrasive CF on Brozzl plated copper
+- Do not confuse `local_cnc_bench` sim ALL_PASS with shop CNC PASS
+
+---
+
+## Prior handoff body (2026-07-14 and earlier)
+
+
+# Session handoff — Kyle + Grok (ForgeOS / Neptune 4 Pro)
+
 **Saved:** 2026-07-14  
 **Workspace:** `/Users/kylefetes/forgeos-n4pro`  
 **Printer:** Elegoo Neptune 4 Pro · `znp-k1` · `192.168.1.178` · SSH `mks@192.168.1.178`  

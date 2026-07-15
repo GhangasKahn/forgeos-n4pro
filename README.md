@@ -111,29 +111,17 @@ python3 scripts/env_plan.py --profile environments/basement_default.yaml
 
 See [docs/environment_homeostasis.md](docs/environment_homeostasis.md).
 
-## Zero-vision adaptive control (primary — no cameras)
+## Adaptive thermal / process (suggest-only)
 
-Closed-loop **dual-bed + nozzle + flat + PA/flow/speed** from Moonraker only.  
-Push N4 Pro toward 10k-class process control **before** buying vision.
+**Mechanics + physics only** — no cameras, no vision, no multi-agent theater.  
+Dual-bed + nozzle + PA/flow/speed suggestions from Moonraker telemetry.  
+Do **not** `--arm` until suggest logs look sane for ≥1 heat cycle.
 
 ```bash
-# Safe real-time brain (suggest-only)
 python3 -m forgeos.adaptive.service --interval 0.5 -v
-# After validation:
-python3 -m forgeos.adaptive.service --interval 0.5 --arm
 ```
 
-→ [docs/ZERO_VISION_10K.md](docs/ZERO_VISION_10K.md) · [docs/MACHINE_FLAT_ZERO_IRON.md](docs/MACHINE_FLAT_ZERO_IRON.md)
-
-## Vision (optional later)
-
-Telemetry-only loop available; Jetson cameras are optional and do **not** replace zero-vision + calipers.
-
-```bash
-python3 -m forgeos.vision.service --interval 0.25
-```
-
-See [docs/VISION_ML_JETSON_STACK.md](docs/VISION_ML_JETSON_STACK.md).
+→ [docs/MACHINE_FLAT_ZERO_IRON.md](docs/MACHINE_FLAT_ZERO_IRON.md)
 
 **Restore shop process state after reboot:**
 ```bash
@@ -147,29 +135,22 @@ Operator runbook with **duration**, **exact procedure**, and **metrics to captur
 
 → [docs/TESTING_SHEET.md](docs/TESTING_SHEET.md)
 
-## Calibration suite (one-time + fine-tune)
+## Calibration suite (one-time + fine-tune + CNC gates)
 
 Full catalog, analysis, G-code generation, and live orchestration:
 
 ```bash
 python3 scripts/run_calibration_suite.py list
 python3 scripts/run_calibration_suite.py plan full
+python3 scripts/run_calibration_suite.py plan one_time
+python3 scripts/run_calibration_suite.py plan fine_tune
 python3 scripts/run_calibration_suite.py analyze g3 --measured 99.92
-python3 scripts/run_calibration_suite.py gcode flow_cube -o artifacts/gcodes/flow_cube.gcode
+python3 scripts/run_calibration_suite.py analyze g4 --measurements 100.0 99.98 100.02
+python3 scripts/run_calibration_suite.py gcode flow_rate -o artifacts/gcodes/flow_cube.gcode
+python3 scripts/run_calibration_suite.py live one_time --host 192.168.1.178 --dry-run
 ```
 
-→ [docs/CALIBRATION_SUITE.md](docs/CALIBRATION_SUITE.md)
-
-## Computer use / browser senses
-
-Open-source [browser-use](https://github.com/browser-use/browser-use) + Playwright + XFCE desktop control (`DISPLAY=:1`):
-
-```bash
-python3 scripts/computer_use.py senses
-browser-harness --doctor
-```
-
-→ [docs/COMPUTER_USE.md](docs/COMPUTER_USE.md)
+→ [docs/CALIBRATION_SUITE.md](docs/CALIBRATION_SUITE.md) · [docs/zero_trust_gates.md](docs/zero_trust_gates.md)
 
 ## Local CNC bench (digital twin)
 
@@ -185,7 +166,8 @@ python3 scripts/zero_trust_live.py --sim
 
 ## Status
 
-**CNC-tier process OS:** calibration suite, zero-vision adaptive, CNC gates (0.10 / 0.05 / Cpk), film/phone swarm removed.  
+**Mandate:** mechanics + physics + electronics + process control. **Zero vision.**  
+**CNC bar:** G3 ≤0.10 mm / 100 mm · G4 span ≤0.05 + Cpk ≥1.0 · mesh p2p ≤0.25 mm.  
 **Mac hub:** `forge_mac_hub.sh` + Host `n4pro` ControlMaster — primary live path.  
-**Local bench:** twin G1/mesh + G-code physics + CNC metrology discrimination — ALL_PASS.  
-Next: Mac LAN → real G3 mean calipers (cloud tunnel only if away).
+**Local bench:** twin labeled `sim:true` — never count as shop CNC PASS.  
+**Cloud:** cannot reach `192.168.1.178` without a real tunnel (`docs/CLOUD_SSH_BRIDGE.md`).

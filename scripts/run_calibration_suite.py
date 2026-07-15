@@ -29,13 +29,15 @@ from forgeos.calibration.analysis import (
     analyze_pa_tower_height,
     analyze_precision_span,
 )
-from forgeos.calibration.gcodes import gcode_first_layer_panel, gcode_single_wall_cube
+from forgeos.calibration.gcodes import gcode_for_test_id
+from forgeos.calibration.ledger import GateLedger
 from forgeos.calibration.registry import (
     CALIBRATION_CATALOG,
     calibration_tests_for_category,
 )
 from forgeos.calibration.runner import CalibrationRunner
 from forgeos.calibration.types import CalCategory
+from forgeos.core.evidence import append_jsonl, write_evidence
 from forgeos.journal import Journal
 from forgeos.moonraker_client import MoonrakerClient
 from forgeos.safety import SafetyGate
@@ -91,35 +93,67 @@ def cmd_analyze(args: argparse.Namespace) -> int:
             print("g3: provide --measured (mm)")
             return 2
         result = analyze_accuracy_error(args.measured, args.nominal or 100.0)
+        led = GateLedger(precision_tier="cnc")
+        led.record_g3(float(args.measured), float(args.nominal or 100.0))
+        path = write_evidence(
+            "g3_measure",
+            {
+                "mean_mm": float(args.measured),
+                "n": 1,
+                "verdict": "PASS" if result.passed else "FAIL",
+                "analysis": result.as_dict(),
+                "ledger": led.as_dict(),
+            },
+            stamp=True,
+        )
+        print("evidence:", path)
     elif args.analyze == "g4":
         if not args.measurements:
             print("g4: provide --measurements 99.9 100.0 99.95")
             return 2
         result = analyze_precision_span(args.measurements)
+        led = GateLedger(precision_tier="cnc")
+        led.record_g4([float(x) for x in args.measurements])
+        path = write_evidence(
+            "g4_measure",
+            {
+                "measurements_mm": list(args.measurements),
+                "n": len(args.measurements),
+                "verdict": "PASS" if result.passed else "FAIL",
+                "analysis": result.as_dict(),
+                "ledger": led.as_dict(),
+            },
+            stamp=True,
+        )
+        print("evidence:", path)
     else:
         print("unknown analyze mode")
         return 2
     print(json.dumps(result.as_dict(), indent=2))
+    append_jsonl(
+        "cal_run_log_%s" % __import__("time").strftime("%Y%m%d"),
+        {"event": "analyze", "mode": args.analyze, "passed": result.passed, "summary": result.summary},
+    )
     return 0 if result.passed else 1
 
 
 def cmd_gcode(args: argparse.Namespace) -> int:
     stack = compose_stack(ambient_temp_c=args.ambient)
-    if args.gcode == "flow_cube":
-        body = gcode_single_wall_cube(
+    # Aliases for catalog ids
+    key = args.gcode
+    try:
+        body = gcode_for_test_id(
+            key,
             bed_c=stack.bed_c,
             nozzle_c=stack.nozzle_c,
+            line_w=stack.line_width_mm,
+            first_speed_mm_s=stack.first_layer_speed_mm_s,
+            layer_h=stack.first_layer_height_mm,
         )
-    elif args.gcode == "first_layer":
-        body = gcode_first_layer_panel(
-            bed_c=stack.bed_c,
-            nozzle_c=stack.nozzle_c,
-            speed_mm_s=stack.first_layer_speed_mm_s,
-        )
-    else:
-        print("unknown gcode type")
+    except ValueError as exc:
+        print(exc)
         return 2
-    out = Path(args.out or "artifacts/gcodes/cal_%s.gcode" % args.gcode)
+    out = Path(args.out or "artifacts/gcodes/cal_%s.gcode" % key)
     out.parent.mkdir(parents=True, exist_ok=True)
     header = "\n".join(stack.gcode_env_commands()) + "\n"
     out.write_text(header + body, encoding="utf-8")
@@ -162,7 +196,7 @@ def main() -> int:
     p_list.set_defaults(func=cmd_list)
 
     p_plan = sub.add_parser("plan", help="Plan calibration sequence")
-    p_plan.add_argument("plan", choices=["one_time", "fine_tune", "full"])
+    p_plan.add_argument("plan", choices=["one_time", "fine_tune", "full", "cnc_close"])
     p_plan.add_argument("--out", default="")
     p_plan.set_defaults(func=cmd_plan)
 
@@ -181,13 +215,26 @@ def main() -> int:
     p_an.set_defaults(func=cmd_analyze)
 
     p_gc = sub.add_parser("gcode", help="Generate calibration G-code")
-    p_gc.add_argument("gcode", choices=["flow_cube", "first_layer"])
+    p_gc.add_argument(
+        "gcode",
+        choices=[
+            "flow_cube",
+            "flow_rate",
+            "first_layer",
+            "first_layer_squish",
+            "pressure_advance",
+            "temperature_tower",
+            "retraction_distance",
+            "rotation_distance",
+            "z_offset_live",
+        ],
+    )
     p_gc.add_argument("-o", "--out", default="")
     p_gc.add_argument("--ambient", type=float, default=14.0)
     p_gc.set_defaults(func=cmd_gcode)
 
     p_live = sub.add_parser("live", help="Run live calibration on printer")
-    p_live.add_argument("live", choices=["one_time", "fine_tune", "full"])
+    p_live.add_argument("live", choices=["one_time", "fine_tune", "full", "cnc_close"])
     p_live.add_argument("--host", default="192.168.1.178")
     p_live.add_argument("--port", type=int, default=7125)
     p_live.add_argument("--dry-run", action="store_true")
@@ -200,11 +247,24 @@ def main() -> int:
     p_cat.set_defaults(func=cmd_catalog)
 
     # Top-level shortcuts (backward compatible)
-    ap.add_argument("--plan", choices=["one_time", "fine_tune", "full"])
+    ap.add_argument("--plan", choices=["one_time", "fine_tune", "full", "cnc_close"])
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--analyze", choices=["mesh", "pa", "flow", "g3", "g4"])
-    ap.add_argument("--gcode", choices=["flow_cube", "first_layer"])
-    ap.add_argument("--live", choices=["one_time", "fine_tune", "full"])
+    ap.add_argument(
+        "--gcode",
+        choices=[
+            "flow_cube",
+            "flow_rate",
+            "first_layer",
+            "first_layer_squish",
+            "pressure_advance",
+            "temperature_tower",
+            "retraction_distance",
+            "rotation_distance",
+            "z_offset_live",
+        ],
+    )
+    ap.add_argument("--live", choices=["one_time", "fine_tune", "full", "cnc_close"])
     ap.add_argument("--host", default="192.168.1.178")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("-o", "--out", default="")

@@ -65,6 +65,13 @@ class CalibrationRunner:
         self.safety.require_armed(purpose, token)
         self._armed = True
 
+    # CNC close: mesh session + G3 + G4 (operator measure) — no full PID re-run
+    CNC_CLOSE_SEQUENCE = (
+        "mesh_fast",
+        "dimensional_accuracy",
+        "precision_replicate",
+    )
+
     def plan_sequence(self, mode: str = "full") -> List[CalTestDef]:
         """Return ordered test definitions for a mode."""
         if mode == "one_time":
@@ -73,6 +80,8 @@ class CalibrationRunner:
             ids = FINE_TUNE_SEQUENCE
         elif mode == "full":
             ids = FULL_CAMPAIGN_SEQUENCE
+        elif mode == "cnc_close":
+            ids = self.CNC_CLOSE_SEQUENCE
         else:
             raise ValueError("unknown mode: %s" % mode)
         out: List[CalTestDef] = []
@@ -80,7 +89,7 @@ class CalibrationRunner:
             t = get_calibration_test(tid)
             if t:
                 # Skip sensor-required tests when no sensor configured
-                if t.requires_sensor == "adxl345" and mode != "one_time":
+                if t.requires_sensor == "adxl345" and mode not in ("one_time", "full"):
                     continue
                 out.append(t)
         return out
@@ -128,24 +137,37 @@ class CalibrationRunner:
     ) -> CalStepResult:
         """Execute klipper commands for one test via Moonraker."""
         if test.requires_sensor and not dry_run:
-            return CalStepResult(
-                test.id,
-                "skip",
-                "requires sensor: %s" % test.requires_sensor,
-                evidence={"requires_sensor": test.requires_sensor},
-            )
+            # Probe Moonraker for accelerometer / required object before hard-skip
+            present = False
+            if self.client and test.requires_sensor == "adxl345":
+                for cand in ("adxl345", "lis2dw", "beacon", "resonance_tester"):
+                    if self.client.has_object(cand):
+                        present = True
+                        break
+            if not present:
+                return CalStepResult(
+                    test.id,
+                    "skip",
+                    "requires sensor: %s (not detected)" % test.requires_sensor,
+                    evidence={"requires_sensor": test.requires_sensor, "detected": False},
+                )
         t0 = time.time()
         log: List[Dict[str, Any]] = []
         if dry_run:
-            for cmd in test.klipper_commands or (test.macro and [test.macro] or []):
+            cmds = list(test.klipper_commands or ())
+            if test.macro and test.macro not in cmds:
+                cmds.insert(0, test.macro)
+            for cmd in cmds:
                 log.append({"cmd": cmd, "dry_run": True})
-            return CalStepResult(
+            result = CalStepResult(
                 test.id,
                 "ok",
                 "dry_run %d commands" % len(log),
                 evidence={"commands": log},
                 duration_s=time.time() - t0,
             )
+            self.results.append(result)
+            return result
         if not self.client:
             return CalStepResult(test.id, "fail", "no Moonraker client")
         if not self.client.is_ready():

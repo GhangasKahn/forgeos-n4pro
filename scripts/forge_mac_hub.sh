@@ -23,6 +23,8 @@ Usage: $0 <command>
   open     open this repo in Cursor (local Mac)
   g0       pytest + G0 gate
   zt       zero_trust_live against shop printer
+  cal      calibration suite plan full (offline)
+  cnc      calibration plan cnc_close (mesh + G3 + G4)
   sim      local CNC digital twin bench (offline)
   mainsail open Mainsail URL
   help     this text
@@ -96,6 +98,19 @@ cmd_zt() {
   exec python3 scripts/zero_trust_live.py --host "$PRINTER_IP" --ssh-probe
 }
 
+cmd_cal() {
+  python3 scripts/run_calibration_suite.py list
+  echo
+  python3 scripts/run_calibration_suite.py plan full
+}
+
+cmd_cnc() {
+  python3 scripts/run_calibration_suite.py plan cnc_close
+  echo
+  echo "Next: measure G3 mean → analyze g3 --measured <mm>"
+  echo "      then G4 ×3 → analyze g4 --measurements a b c"
+}
+
 cmd_sim() {
   exec python3 scripts/local_cnc_bench.py
 }
@@ -117,6 +132,8 @@ main() {
     open)     cmd_open "$@" ;;
     g0)       cmd_g0 "$@" ;;
     zt)       cmd_zt "$@" ;;
+    cal)      cmd_cal "$@" ;;
+    cnc)      cmd_cnc "$@" ;;
     sim)      cmd_sim "$@" ;;
     mainsail) cmd_mainsail "$@" ;;
     help|-h|--help) usage ;;

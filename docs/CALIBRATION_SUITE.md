@@ -14,6 +14,7 @@ python3 scripts/run_calibration_suite.py list
 python3 scripts/run_calibration_suite.py plan one_time
 python3 scripts/run_calibration_suite.py plan fine_tune
 python3 scripts/run_calibration_suite.py plan full
+python3 scripts/run_calibration_suite.py plan cnc_close   # mesh + G3 + G4
 
 # Analyze measurements (offline)
 python3 scripts/run_calibration_suite.py analyze g3 --measured 99.92

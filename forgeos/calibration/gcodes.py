@@ -169,3 +169,43 @@ def gcode_retraction_tower_prep(
         "SET_RETRACTION RETRACT_LENGTH=%.2f" % start_mm,
         "; increment %.2f mm per layer in slicer" % step_mm,
     ]
+
+
+def gcode_for_test_id(
+    test_id: str,
+    *,
+    bed_c: float = 65.0,
+    nozzle_c: float = 214.0,
+    line_w: float = 0.44,
+    first_speed_mm_s: float = 18.0,
+    layer_h: float = 0.28,
+) -> str:
+    """Dispatch coupon G-code by calibration catalog id (or alias)."""
+    tid = test_id.replace("-", "_")
+    if tid in ("flow_rate", "flow_cube", "flow"):
+        return gcode_single_wall_cube(
+            line_w=line_w,
+            bed_c=bed_c,
+            nozzle_c=nozzle_c,
+        )
+    if tid in ("first_layer_squish", "first_layer", "z_offset_live"):
+        return gcode_first_layer_panel(
+            line_w=line_w,
+            layer_h=layer_h,
+            speed_mm_s=first_speed_mm_s,
+            bed_c=bed_c,
+            nozzle_c=nozzle_c,
+        )
+    if tid in ("pressure_advance", "pa"):
+        return "\n".join(gcode_pa_tower_prep(bed_c=bed_c, nozzle_c=nozzle_c)) + "\n"
+    if tid in ("temperature_tower", "temp"):
+        return "\n".join(gcode_temp_tower_prep(bed_c=bed_c)) + "\n"
+    if tid in ("retraction_distance", "retract"):
+        return "\n".join(gcode_retraction_tower_prep()) + "\n"
+    if tid in ("rotation_distance",):
+        return "\n".join(gcode_rotation_distance_test()) + "\n"
+    raise ValueError(
+        "no gcode generator for %s — use generate_g3_bar_gcode.py for dimensional bar"
+        % test_id
+    )
+

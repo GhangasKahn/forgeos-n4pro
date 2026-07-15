@@ -1,6 +1,6 @@
-"""Moonraker control bus — shared by adaptive brain and optional vision loop.
+"""Moonraker control bus — shared by adaptive thermal / process brain.
 
-Moved out of forgeos.vision so zero-vision control has no camera dependency.
+Mechanics-only: no cameras, no vision.
 """
 
 from __future__ import annotations
