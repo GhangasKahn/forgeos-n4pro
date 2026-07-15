@@ -14,7 +14,10 @@ def test_htpla_pex_brozzl_stack():
     assert s.bed_c == 65
     assert 210 <= s.nozzle_c <= 220
     assert s.soak_min >= 4.0
-    assert s.first_layer_speed_mm_s <= 20
+    assert s.first_layer_speed_mm_s == pytest.approx(28.5)
+    assert s.first_layer_height_mm == pytest.approx(0.28)
+    assert s.line_width_mm == pytest.approx(0.44)
+    assert s.first_layer_flow == pytest.approx(1.0)
     assert s.brim is True
     assert s.glue is False
     assert s.nozzle_type_token == "brozzl_plated_copper"
