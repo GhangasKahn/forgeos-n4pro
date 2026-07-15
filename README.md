@@ -122,6 +122,19 @@ Operator runbook with **duration**, **exact procedure**, and **metrics to captur
 
 → [docs/TESTING_SHEET.md](docs/TESTING_SHEET.md)
 
+## Calibration suite (one-time + fine-tune)
+
+Full catalog, analysis, G-code generation, and live orchestration:
+
+```bash
+python3 scripts/run_calibration_suite.py list
+python3 scripts/run_calibration_suite.py plan full
+python3 scripts/run_calibration_suite.py analyze g3 --measured 99.92
+python3 scripts/run_calibration_suite.py gcode flow_cube -o artifacts/gcodes/flow_cube.gcode
+```
+
+→ [docs/CALIBRATION_SUITE.md](docs/CALIBRATION_SUITE.md)
+
 ## Status
 
 **Phase 0 complete:** skeleton, materials, safety, journal, optimizers, gates, moisture soft-sensor, Klipper overlays, unit tests.  

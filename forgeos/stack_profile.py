@@ -148,7 +148,10 @@ def compose_stack(
 
     first_spd = float(
         fl.get("speed_mm_s", surf_bias.get("first_layer_speed_mm_s", 18))
-    ) * float(noz_bias.get("first_layer_speed_scale", 1.0))
+    )
+    # Adhesion-limited: surface pack caps speed (PEX basement policy)
+    surf_cap = float(surf_bias.get("first_layer_speed_mm_s", first_spd))
+    first_spd = min(first_spd, surf_cap) * float(noz_bias.get("first_layer_speed_scale", 1.0))
 
     notes = []
     notes.extend([str(n) for n in pack.notes[:3]])
