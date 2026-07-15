@@ -11,7 +11,7 @@ offset, flow ratio, pressure advance or input-shaper frequency.
 # Static configuration check; no printer connection
 python3 scripts/calibrate.py audit
 
-# Complete operator plan (24 tests)
+# Complete operator plan (25 tests)
 python3 scripts/calibrate.py plan
 python3 scripts/calibrate.py plan --phase one_time
 python3 scripts/calibrate.py plan --phase fine_tuning
