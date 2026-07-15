@@ -7,6 +7,22 @@ Greenfield **OpenNeptune-class** process OS for the **Elegoo Neptune 4 Pro**, bu
 
 Printer on this network: `mks@192.168.1.178` (`znp-k1`).
 
+## Daily path (Mac on LAN)
+
+**Normal work is Mac-first.** Cloud tunnels are fallback only.
+
+```bash
+cd ~/forgeos-n4pro
+./scripts/forge_mac_hub.sh open      # Cursor on this Mac
+# ... edit ...
+./scripts/forge_mac_hub.sh deploy    # rsync via Host n4pro (ControlMaster)
+./scripts/forge_mac_hub.sh status    # light health check
+```
+
+Mainsail: http://192.168.1.178:81  
+
+→ [docs/MAC_EFFICIENT_WORKFLOW.md](docs/MAC_EFFICIENT_WORKFLOW.md) · fallback only: [docs/CLOUD_SSH_BRIDGE.md](docs/CLOUD_SSH_BRIDGE.md)
+
 ## What this is
 
 | Layer | Role |
@@ -29,9 +45,12 @@ python3 scripts/run_calibration_suite.py plan full
 
 ## Deploy to printer (safe default = dry-run)
 
+Defaults to SSH Host `n4pro` (multiplexed). Override with `FORGE_HOST=mks@192.168.1.178` if needed.
+
 ```bash
-./scripts/deploy.sh           # dry-run
-./scripts/deploy.sh --apply   # rsync code + copy overlays to config/forgeos
+./scripts/forge_mac_hub.sh deploy   # apply (preferred)
+./scripts/deploy.sh                 # dry-run
+./scripts/deploy.sh --apply         # rsync + copy overlays to config/forgeos
 ```
 
 Then **manually** include overlays in `printer.cfg` after backup (deploy never auto-rewrites live printer.cfg).
@@ -167,6 +186,6 @@ python3 scripts/zero_trust_live.py --sim
 ## Status
 
 **CNC-tier process OS:** calibration suite, zero-vision adaptive, CNC gates (0.10 / 0.05 / Cpk), film/phone swarm removed.  
-**Senses online:** desktop + Playwright + browser-harness CDP.  
+**Mac hub:** `forge_mac_hub.sh` + Host `n4pro` ControlMaster — primary live path.  
 **Local bench:** twin G1/mesh + G-code physics + CNC metrology discrimination — ALL_PASS.  
-Next: shop tunnel → real G3 mean calipers.
+Next: Mac LAN → real G3 mean calipers (cloud tunnel only if away).

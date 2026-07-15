@@ -1,0 +1,44 @@
+# Keep Cursor light on ForgeOS — skip bulky / regenerable artifacts.
+# Mirror these ideas in Cursor Settings → Search: exclude / files.watcherExclude.
+
+# Generated G-code & meshes
+artifacts/gcodes/
+artifacts/**/*.gcode
+**/*.gcode
+**/*.stl
+**/*.3mf
+**/*.obj
+
+# Journals / large reports / local DB
+artifacts/*_journal.jsonl
+artifacts/local/
+artifacts/*.sqlite3
+**/*.sqlite3
+**/*.db
+
+# Python / tooling noise
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.egg-info/
+
+# Logs & editor junk
+logs/
+*.log
+.DS_Store
+.git/
+
+# Secrets / keys (never index)
+id_rsa*
+credentials*
+.env
+**/*printer.env
+
+# Optional bulky dumps
+artifacts/**/*_mesh*.json
+artifacts/**/bed_mesh*

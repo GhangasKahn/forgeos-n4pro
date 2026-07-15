@@ -3,7 +3,8 @@
 # Default: DRY RUN. Pass --apply to execute.
 set -euo pipefail
 
-HOST="${FORGE_HOST:-mks@192.168.1.178}"
+# Prefer SSH Host alias `n4pro` (ControlMaster multiplex) — see docs/MAC_EFFICIENT_WORKFLOW.md
+HOST="${FORGE_HOST:-n4pro}"
 REMOTE_ROOT="${FORGE_REMOTE_ROOT:-/home/mks/forgeos-n4pro}"
 REMOTE_CFG="${FORGE_REMOTE_CFG:-/home/mks/printer_data/config/forgeos}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
