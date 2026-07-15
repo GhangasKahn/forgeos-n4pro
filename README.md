@@ -141,7 +141,19 @@ python3 scripts/run_calibration_suite.py gcode flow_cube -o artifacts/gcodes/flo
 
 → [docs/CALIBRATION_SUITE.md](docs/CALIBRATION_SUITE.md)
 
+## Computer use / browser senses
+
+Open-source [browser-use](https://github.com/browser-use/browser-use) + Playwright + XFCE desktop control (`DISPLAY=:1`):
+
+```bash
+python3 scripts/computer_use.py senses
+browser-harness --doctor
+```
+
+→ [docs/COMPUTER_USE.md](docs/COMPUTER_USE.md)
+
 ## Status
 
 **CNC-tier process OS:** calibration suite, zero-vision adaptive, CNC gates (0.10 / 0.05 / Cpk), film/phone swarm removed.  
-Next: live G3/G4 coupons against CNC band on the printer.
+**Senses online:** desktop screenshot + Playwright + browser-harness CDP.  
+Next: live G3/G4 coupons against CNC band once printer tunnel exists.
