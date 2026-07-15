@@ -1,0 +1,26 @@
+{
+  "gates": [
+    {
+      "gate_id": "G3",
+      "name": "dimensional_accuracy",
+      "status": "pass",
+      "detail": "|err|=0.100",
+      "evidence": {
+        "abs_error_100mm": 0.1
+      },
+      "ts": 1784124355.9563994
+    },
+    {
+      "gate_id": "G4",
+      "name": "precision_replicate",
+      "status": "pass",
+      "detail": "span=0.050",
+      "evidence": {
+        "span_mm": 0.05
+      },
+      "ts": 1784124355.9564016
+    }
+  ],
+  "all_pass": true,
+  "production_ready": false
+}
